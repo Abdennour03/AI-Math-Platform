@@ -1,0 +1,15 @@
+# Virtual Environment
+Mlops/
+
+# Python
+__pycache__/
+*.pyc
+
+# VSCode
+.vscode/
+
+# MLflow
+mlruns/
+
+# DVC
+.dvc/cache/
