@@ -1,5 +1,5 @@
 # Virtual Environment
-Mlops/
+.venv/
 
 # Python
 __pycache__/
