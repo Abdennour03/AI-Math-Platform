@@ -1,0 +1,8 @@
+class Student:
+    def __init__(self, student_id, full_name, email, password, phone_number, level):
+        self.student_id = student_id
+        self.full_name = full_name
+        self.email = email
+        self.password = password
+        self.phone_number = phone_number
+        self.level = level
