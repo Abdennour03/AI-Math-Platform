@@ -3,6 +3,5 @@ class Notification:
             self.notification_id = notification_id
             self.title = title
             self.message = message
-            self.title = title
             self.receiver = receiver
             self.created_at = created_at

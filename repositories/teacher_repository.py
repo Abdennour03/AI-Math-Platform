@@ -15,7 +15,7 @@ class TeacherRepo:
         return self.teacher
         
     def update_teacher(self, teacher_id, **kwargs):
-        for index ,teacher in enumerate(self.teacher):
+        for teacher in self.teacher:
             if teacher.teacher_id == teacher_id:
                 for key, value in kwargs.items():
                     if hasattr(teacher, key):
