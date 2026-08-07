@@ -1,0 +1,72 @@
+from models.student import Student
+from models.exercise import Exercise
+from utils.submission_validation import SubmissionValidator
+from models.submission import Submission
+
+
+
+class SubmissionController:
+    def __init__(self, submission_repo):
+        self.submission_repo = submission_repo
+
+    def create_submission(self, student, exercise, submission_date, file_path, status):
+        if not isinstance(student, Student):
+            raise ValueError("Invalid student")
+        if not isinstance(exercise, Exercise):
+            raise ValueError("Invalid exercise")
+        
+        # validate status 
+        SubmissionValidator.validation_status(status)
+        submission = Submission(None, student, exercise, submission_date, file_path, status)
+        self.submission_repo.add_submission(submission)
+
+        return "Submission created successfullty."
+    def get_submission(self, submission_id):
+        if not isinstance(submission_id, int):
+            raise ValueError("Submission ID mustbe int.")
+        submission = self.submission_repo.get_submission(submission_id)
+        if submission is None:
+            raise ValueError("Submition not found")
+        return submission
+    def get_all_submissions(self):
+        return self.submission_repo.get_all_submission()
+
+    def update_submission(self, submission_id, **kwargs):
+        submission = self.submission_repo.get_submission(submission_id)
+        if submission is None:
+            raise ValueError("Submission not found.")
+        if "status" in kwargs:
+            SubmissionValidator.validation_status(kwargs["status"])
+
+        self.submission_repo.update_submission(submission_id, **kwargs)
+        return "Submission updated successfully"
+    
+    def delete_submission(self, submission_id):
+        if not isinstance(submission_id, int):
+            raise ValueError("Submission ID must be int")
+        submission = self.submission_repo.get_submission(submission_id)
+        if submission is None:
+            raise ValueError("Submission not found.")
+        self.submission_repo.delete_submission(submission_id)
+        return "Submission deleted succssefully."
+
+    def search_submission_by_student(self, student_id):
+        if not isinstance(student_id, int):
+            raise ValueError("Student ID must be int.")
+        submissions = self.submission_repo.seach_submission_by_student(student_id)
+        if submissions is None:
+            raise ValueError("Submission not found.")
+        return submissions
+
+
+    def search_submission_by_exercise(self, exercise_id):
+        if not isinstance(exercise_id, int):
+            raise ValueError("exercise ID must be int.")
+        submissions = self.submission_repo.search_submission_by_exercise(exercise_id)
+        if not submissions :
+            raise ValueError("Submission not found.")
+        return submissions
+
+    
+    def count_submissions(self):
+        return self.submission_repo.count_submissions()

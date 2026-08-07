@@ -26,7 +26,7 @@ class TeacherController:
 
 
     def get_all_teachers(self):
-            teachers = self.teacher_repo.get_all_teacher()
+            teachers = self.teacher_repo.get_all_teachers()
             if not teachers:
                 raise ValueError("No teachers found.")
             return teachers

@@ -1,6 +1,6 @@
 class Grade:
-    def __init__(self, grad_id, score, student, exercise):
-        self.grad_id = grad_id
+    def __init__(self, grade_id, score, student, exercise):
+        self.grade_id = grade_id
         self.score = score
-        self.tudent = student
+        self.student = student
         self.exercise = exercise
