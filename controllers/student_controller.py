@@ -66,4 +66,4 @@ class StudentController:
         return students
 
     def count_students(self):
-        return self.student_repo.search_student()
+        return self.student_repo.count_students()

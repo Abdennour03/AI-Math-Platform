@@ -41,5 +41,5 @@ class StudentRepo:
         return results
 
     
-    def count_student(self):
-        return len(self.student)
+    def count_students(self):
+        return len(self.students)

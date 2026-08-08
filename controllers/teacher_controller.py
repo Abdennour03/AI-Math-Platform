@@ -5,6 +5,7 @@ class TeacherController:
     def __init__(self, teacher_repo):
         self.teacher_repo = teacher_repo
         
+        
     def create_teacher(self, full_name, email, password, phone_number):
         validation = TeacherValidator()
         validation.validate_name(full_name)
@@ -20,7 +21,7 @@ class TeacherController:
         if not isinstance(teacher_id, int):
             raise ValueError("Teacher Id must be an integer.")
         teacher = self.teacher_repo.get_teacher(teacher_id)
-        if teacher in None:
+        if teacher is None:
             raise ValueError("Teacher not found.")
         return teacher
 

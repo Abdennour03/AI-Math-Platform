@@ -26,7 +26,7 @@ class StudentValidator:
         if not password:
             raise ValueError("password cannot be empty")
         if len(password) < 8:
-            raise ValueError("invalid")
+            raise ValueError("invalid size of password")
         if not any(char.isalpha() for char in password):
             raise ValueError("Pasword must contain at least one latter.")
         if not any(char.isdigit() for char in password):
