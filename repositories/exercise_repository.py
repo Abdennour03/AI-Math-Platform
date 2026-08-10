@@ -1,43 +1,46 @@
 class ExerciseRepo:
     def __init__(self):
-        self.exercices = []
+        self.exercises = []
+        self.next_id = 1
 
-    def add_exercice(self, exercice):
-        self.exercices.append(exercice)
+    def add_exercise(self, exercise):
+        exercise.exercise_id = self.next_id
+        self.next_id += 1
+        self.exercises.append(exercise)
 
-    def get_exercice(self, exercice_id):
-        for exercice in self.exercices:
-            if exercice.exercice_id == exercice_id:
-                return exercice
+    def get_exercise(self, exercise_id):
+        for exercise in self.exercises:
+            if exercise.exercise_id == exercise_id:
+                return exercise
         return None 
 
 
-    def get_all_exercices(self):
-        return self.exercices
+    def get_all_exercises(self):
+        return self.exercises
 
-    def update_exercice(self, exercice_id, **kwargs):
-        for exercice in self.exercices:
-            if exercice.exercice_id == exercice_id:
+    def update_exercise(self, exercise_id, **kwargs):
+        for exercise in self.exercises:
+            if exercise.exercise_id == exercise_id:
                 for key, value in kwargs.items():
-                    if hasattr(exercice, key):
-                        setattr(exercice, key, value)
+                    if hasattr(exercise, key):
+                        setattr(exercise, key, value)
                 return True 
         return False
 
-    def delete_exercice(self, exercice_id):
-        for index, exercice in enumerate(self.exercices):
-            if exercice.exercice_id == exercice_id:
-                del self.exercices[index]
+    def delete_exercise(self, exercise_id):
+        for index, exercise in enumerate(self.exercises):
+            if exercise.exercise_id == exercise_id:
+                del self.exercises[index]
                 return True
         return False
 
-    def search_exercice(self, query):
-        result_exercices = []
-        for exercice in self.exercices:
-            if query.lower() in exercice.exercice_name.lower() :
-                result_exercices.append(exercice)
-        return result_exercices
+    def search_exercise(self, query):
+        result_exercises = []
+        for exercise in self.exercises:
+            if query.lower() in exercise.exercise_name.lower() :
+                result_exercises.append(exercise)
+        return result_exercises
 
 
-    def count_exercices(self):
-        return len(self.exercices)
+    def count_exercises(self):
+        return len(self.exercises)

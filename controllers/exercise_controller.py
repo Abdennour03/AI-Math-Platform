@@ -1,17 +1,21 @@
-from models.exercise import exercise
+from models.exercise import Exercise
 from utils.validation_exercise import ExerciseValidator
 from models.exercise import Exercise
 class ExerciseController:
-    def __init__(self, exercise_repo):
+    def __init__(self, exercise_repo, course_repo):
         self.exercise_repo = exercise_repo
+        self.course_repo = course_repo
 
-    def create_execise(self, exercise_name, exercise, level):
+    def create_exercise(self, exercise_name, course_id, level):
 
         ExerciseValidator.validation_exercise_name(exercise_name)
         ExerciseValidator.validation_level(level)
-        if not isinstance(exercise, exercise):
-            raise ValueError("invalid exercise.")
-        exercise = Exercise(None, exercise_name, exercise, level)
+
+        #find the course id of the exrcise we need 
+        course = self.course_repo.get_course(course_id)
+        if course is None:
+            raise ValueError("No course found.")
+        exercise = Exercise(None, exercise_name, course, level)
 
         self.exercise_repo.add_exercise(exercise)
         return "Exercise created successfully."
@@ -52,7 +56,7 @@ class ExerciseController:
             raise ValueError("Search query cannot be empty.")
 
         exercises = self.exercise_repo.search_exercise(query)
-        if not exercise:
+        if not exercises:
             raise ValueError("No exercise found.")
         return exercises
 

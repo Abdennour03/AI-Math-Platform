@@ -1,8 +1,11 @@
 class CourseRepo:
     def __init__(self):
         self.courses = []
+        self.next_id = 1
 
     def add_course(self, course):
+        course.course_id = self.next_id
+        self.next_id += 1
         self.courses.append(course)
 
     def get_course(self, course_id):

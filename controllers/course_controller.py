@@ -1,22 +1,21 @@
 from models.course import Course
 from utils.validation_course import CourseValidator
-from models.teacher import Teacher
 
 class CourseController:
-    def __init__(self, course_repo):
+    def __init__(self, course_repo, teacher_repo):
         self.course_repo = course_repo
+        self.teacher_repo = teacher_repo
 
-    def create_course(self, course_name, description, teacher, level, semester):
+    def create_course(self, course_name, teacher_id, level, semester):
 
         CourseValidator.validate_course_name(course_name)
-        CourseValidator.validate_description(description)
         CourseValidator.Validation_level(level)
         CourseValidator.Validation_semester(semester)
-
         
-        if not isinstance(teacher, Teacher):
-            raise ValueError("invalid teacher.")
-        course = Course(None, course_name, description, teacher, level, semester)
+        teacher = self.teacher_repo.get_teacher(teacher_id)
+        if teacher is None:
+            raise ValueError("Teacher not found")
+        course = Course(None, course_name, teacher, level, semester)
 
         self.course_repo.add_course(course)
         return "Course created successfully."
