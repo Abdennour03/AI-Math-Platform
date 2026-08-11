@@ -128,6 +128,7 @@ Semester : {course.semester}
     def update_course(self):
         try:
             course_id = int(Prompt.ask("course ID"))
+            
             print("\nLeave a feild empty if you dont want to change it.")
 
             course_name = Prompt.ask("Full name", default="")

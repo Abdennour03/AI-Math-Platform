@@ -74,7 +74,7 @@ class ExerciseView:
             exercise_id = int(Prompt.ask("exercise ID", default=""))
         except ValueError :
             console.print(
-                "[bold red]teacher ID must be an integer.[/]"
+                "[bold red]Exercise ID must be an integer.[/]"
             )
             Prompt.ask("\nPress Enter to countinue", default="")
             return           
@@ -85,8 +85,9 @@ class ExerciseView:
             console.print(Panel.fit(f"""
 ID : {exercise.exercise_id}
 exercise Name : {exercise.exercise_name}
-course : {exercise.level}
 level : {exercise.course}
+course : {exercise.level}
+
 
 """))
             
@@ -102,16 +103,17 @@ level : {exercise.course}
                 console.print("[bold yellow]Press Enter to continue[/]")
                 return
             tabel = Table(title="exercises", border_style="cyan")
-            tabel.add_column("ID")
+            tabel.add_column("Exercise ID")
             tabel.add_column("exercise Name")
             tabel.add_column("Level")
-            tabel.add_column("course")
+            tabel.add_column("course ID")
             for exercise in exercises:
                     tabel.add_row(
                         str(exercise.exercise_id),
                         exercise.exercise_name,
+                        str(exercise.course.course_id),
                         exercise.level,
-                        exercise.course,
+                        
                 
                     )
             console.print(
@@ -131,19 +133,27 @@ level : {exercise.course}
 
             exercise_name = Prompt.ask("Full name", default="")
             level = Prompt.ask("email", default="level")
-            course = Prompt.ask("course", default="")
+            course_id = int(Prompt.ask("course", default=""))
 
             updates = {}
             if exercise_name.strip():
-                updates["full_name"] = exercise_name
+                updates["exercise name"] = exercise_name
             if level.strip():
-                updates["email"] = level
-            if course.strip():
-                updates["password"] = course
+                updates["level"] = level
+            if course_id.strip():
+
+                try:
+                    updates["course"] = course_id
+                except ValueError:
+                    raise ValueError(
+                        "Course ID must be an integer."
+                    )
+
             if not updates:
                 console.print("[bold yellow]No changes were provided.[/")
                 return
             Prompt.ask("\nPress Enter to continue")
+
             result = self.exercise_controller.update_exercise(
                     exercise_id,
                     **updates
@@ -177,14 +187,14 @@ level : {exercise.course}
             tabel.add_column("exercise ID")
             tabel.add_column("exercise Name")
             tabel.add_column("Level")
-            tabel.add_column("course")
+            tabel.add_column("course ID")
             
             for exercise in exercises:
                 tabel.add_row(
-                    int(exercise.exercise_id),
+                    str(exercise.exercise_id),
                     exercise.exercise_name,
-                    exercise.level,
-                    exercise.course
+                    str(exercise.course.course_id),
+                    exercise.level
                 )
             console.print(Align.center(tabel))
         except ValueError as error:

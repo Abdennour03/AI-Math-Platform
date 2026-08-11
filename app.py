@@ -15,6 +15,13 @@ from controllers.exercise_controller import ExerciseController
 from repositories.exercise_repository import ExerciseRepo
 
 
+from repositories.notification_repository import NotificationRepo
+from repositories.student_notification_repository import StudentNotificationRepo
+
+from controllers.notification_controller import NotificationController
+from views.notification_view import NotificationView
+
+
 main_view = MainView()
 
 student_repo = StudentRepo()
@@ -33,6 +40,20 @@ exercise_repo = ExerciseRepo()
 exercise_controller = ExerciseController(exercise_repo, course_repo)
 exercise_view = ExerciseView(exercise_controller)
 
+
+notification_repo = NotificationRepo()
+student_notification_repo = StudentNotificationRepo()
+
+notification_controller = NotificationController(
+    notification_repo,
+    student_notification_repo,
+    teacher_repo,
+    student_repo
+)
+
+notification_view = NotificationView(notification_controller)
+
+
 while True:
     choice = main_view.display_menu()
     if choice == "1":
@@ -43,6 +64,8 @@ while True:
             course_view.display_menu()
     elif choice == "4":
             exercise_view.display_menu()
+    elif choice == "7":
+        notification_view.display_menu()
     elif choice == "0":
            break
     

@@ -1,24 +1,68 @@
 from utils.notification_validation import NotificationValidator
 from models.notification import Notification
+from models.teacher import Teacher
+from models.student import Student
+from datetime import datetime
+from models.student_notification import StudentNotification
+
 
 
 
 class NotificationController:
-    def __init__(self, notification_repo):
+    def __init__(self, notification_repo,student_notification_repo ,teacher_repo, student_repo):
         self.notification_repo = notification_repo
+        self.student_notification_repo = student_notification_repo
+        self.teacher_repo = teacher_repo
+        self.student_repo = student_repo
 
-    def create_notification(self, title, message, receiver, created_at):
+    def create_notification(self, title, message, teacher_id):
 
         NotificationValidator.validation_title(title)
         NotificationValidator.validation_message(message)
 
-        notification = Notification(None, title, message, receiver, created_at)
+        created_at = datetime.now()
+        teacher = self.teacher_repo.get_teacher(teacher_id)
+        if not isinstance(teacher_id, int):
+            raise ValueError("Teacher ID must be an integer.")
+        if teacher is None:
+            raise ValueError("Teacher not found.")
+    
+        notification = Notification(None, title, message, teacher, created_at)
         self.notification_repo.add_notification(notification)
-        return "notification created successfullty."
-
+        return notification
 
     
+    def send_to_all_students(self, notification):
+
+        students = self.student_repo.get_all_student()
+        if not students:
+            raise ValueError("No students found.")
+
+        for student in students:
+            student_notification = StudentNotification(
+                None,
+                student,
+                notification
+            )
+            self.student_notification_repo.add_student_notification(
+                student_notification
+            )
+
+        return "Notification sent to all students."
+
+    def send_to_student(self, notification, student_id):
+        if not isinstance(student_id, int):
+            raise ValueError("Student ID must be an integer.")
+        student = self.student_repo.get_student(student_id)
+        if student is None:
+            raise ValueError("Student not found.")
+        student_notification = StudentNotification(None, student, notification)
+        self.student_notification_repo.add_student_notification(student_notification)
+        return "Notification sent to student."
+
+
     def get_notification(self, notification_id):
+
         if not isinstance(notification_id, int):
             raise ValueError("notification ID mustbe int.")
         notification = self.notification_repo.get_notification(notification_id)
@@ -30,18 +74,38 @@ class NotificationController:
     def get_all_notifications(self):
         return self.notification_repo.get_all_notifications()
 
-    def update_notification(self, notification_id, **kwargs):
+    def get_student_notifications(self, student_id):
 
-        notification = self.notification_repo.get_notification(notification_id)
-        if notification is None:
-            raise ValueError("notification not found.")
-        if "title" in kwargs:
-            NotificationValidator.validation_title(kwargs["title"])
-        if "message" in kwargs:
-            NotificationValidator.validation_message(kwargs["message"])
+        if not isinstance(student_id, int):
+            raise ValueError(
+                "Student ID must be an integer."
+            )
 
-        self.notification_repo.update_notification(notification_id, **kwargs)
-        return "notification updated successfully"
+        student = self.student_repo.get_student(student_id)
+        if student is None:
+            raise ValueError(
+                "Student not found."
+            )
+
+        return self.student_notification_repo.get_notifications_for_student(
+            student_id
+        )
+
+    def mark_as_read(self, student_notification_id):
+
+        if not isinstance(student_notification_id, int):
+            raise ValueError(
+                "Student Notification ID must be an integer."
+            )
+        result = self.student_notification_repo.mark_as_read(
+            student_notification_id
+        )
+        if not result:
+            raise ValueError(
+                "Student notification not found."
+            )
+        return "Notification marked as read."
+
     
     def delete_notification(self, notification_id):
         if not isinstance(notification_id, int):
@@ -52,17 +116,3 @@ class NotificationController:
         self.notification_repo.delete_notification(notification_id)
         return "notification deleted succssefully."
 
-    def search_notification(self, query):
-        query = query.strip()
-
-        if not query:
-            raise ValueError("Search query cannot be empty.")
-        
-        notifications = self.notification_repo.search_notification(query)
-        if not notifications :
-            raise ValueError(" No notification found.")
-        return notifications
-
-
-    def count_notifications(self):
-        return self.notification_repo.count_notifications()

@@ -38,6 +38,14 @@ class ExerciseController:
             raise ValueError("exercise not found")
         if "exercise_name" in kwargs:
             ExerciseValidator.validation_exercise_name(kwargs["exercise_name"])
+        if "course_id" in kwargs:
+            course = self.course_repo.get_course(
+                kwargs["course_id"]
+            )
+            if course is None:
+                raise ValueError("Course not found.")
+            kwargs["course"] = course
+            del kwargs["course_id"]
 
         self.exercise_repo.update_exercise(exercise_id, **kwargs)
         return "exercise updated successfully."

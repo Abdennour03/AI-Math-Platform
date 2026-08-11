@@ -1,9 +1,13 @@
 class NotificationRepo:
     def __init__(self):
         self.notifications = []
+        self.next_id = 1
 
     def add_notification(self, notification):
+        self.notification_id = self.next_id
+        self.next_id +=1
         self.notifications.append(notification)
+        
 
     def get_notification(self, notification_id):
         for notification in self.notifications:

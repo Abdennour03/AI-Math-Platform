@@ -38,8 +38,13 @@ class CourseController:
             raise ValueError("Course not found")
         if "course_name" in kwargs:
             CourseValidator.validate_course_name(kwargs["course_name"])
-        if "description" in kwargs:
-             CourseValidator.validate_course_name(kwargs["description"])
+        if "teacher_id" in kwargs:
+            teacher = self.teacher_repo.get_teacher(kwargs["teacher_id"])
+            if teacher is None:
+                raise ValueError("Teacher not found.")
+            kwargs["teacher"] = teacher
+            del kwargs["teacher_id"] 
+
         self.course_repo.update_course(course_id, **kwargs)
         return "Course updated successfully."
     def delete_course(self, course_id):
