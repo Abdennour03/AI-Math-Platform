@@ -6,15 +6,23 @@ from models.submission import Submission
 
 
 class SubmissionController:
-    def __init__(self, submission_repo):
+    def __init__(self, submission_repo, student_repo, exercise_repo):
         self.submission_repo = submission_repo
+        self.student_repo = student_repo
+        self.exercise_repo = exercise_repo
 
-    def create_submission(self, student, exercise, submission_date, file_path, status):
-        if not isinstance(student, Student):
+    def create_submission(self, student_id, exercise_id, submission_date, file_path, status):
+        if not isinstance(student_id, int):
             raise ValueError("Invalid student")
-        if not isinstance(exercise, Exercise):
+        if not isinstance(exercise_id, int):
             raise ValueError("Invalid exercise")
-        
+        student = self.student_repo.get_student(student_id)
+        if student is None:
+            raise ValueError("Student not found.")
+        exercise = self.exercise_repo.get_exercise(exercise_id)
+        if exercise is None:
+            raise ValueError("exercise not found.")
+                
         # validate status 
         SubmissionValidator.validation_status(status)
         submission = Submission(None, student, exercise, submission_date, file_path, status)
@@ -29,7 +37,7 @@ class SubmissionController:
             raise ValueError("Submition not found")
         return submission
     def get_all_submissions(self):
-        return self.submission_repo.get_all_submission()
+        return self.submission_repo.get_all_submissions()
 
     def update_submission(self, submission_id, **kwargs):
         submission = self.submission_repo.get_submission(submission_id)
@@ -53,7 +61,10 @@ class SubmissionController:
     def search_submission_by_student(self, student_id):
         if not isinstance(student_id, int):
             raise ValueError("Student ID must be int.")
-        submissions = self.submission_repo.seach_submission_by_student(student_id)
+        student = self.student_repo.get_student(student_id)
+        if student is None:
+            raise ValueError("Student not found.")
+        submissions = self.submission_repo.search_submission_by_student(student_id)
         if submissions is None:
             raise ValueError("Submission not found.")
         return submissions
@@ -62,6 +73,9 @@ class SubmissionController:
     def search_submission_by_exercise(self, exercise_id):
         if not isinstance(exercise_id, int):
             raise ValueError("exercise ID must be int.")
+        exercise = self.exercise_repo.get_exercise(exercise_id)
+        if exercise is None:
+            raise ValueError("exercise not found.")
         submissions = self.submission_repo.search_submission_by_exercise(exercise_id)
         if not submissions :
             raise ValueError("Submission not found.")

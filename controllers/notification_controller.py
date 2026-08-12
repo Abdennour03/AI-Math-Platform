@@ -76,6 +76,7 @@ class NotificationController:
 
     def get_student_notifications(self, student_id):
 
+        # validation student id
         if not isinstance(student_id, int):
             raise ValueError(
                 "Student ID must be an integer."
@@ -107,12 +108,3 @@ class NotificationController:
         return "Notification marked as read."
 
     
-    def delete_notification(self, notification_id):
-        if not isinstance(notification_id, int):
-            raise ValueError("notification ID must be int")
-        notification = self.notification_repo.get_notification(notification_id)
-        if notification is None:
-            raise ValueError("notification not found.")
-        self.notification_repo.delete_notification(notification_id)
-        return "notification deleted succssefully."
-

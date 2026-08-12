@@ -6,9 +6,9 @@ from rich.prompt import Prompt
 
 console = Console()
 class StudentView:
-    def __init__(self, student_controller):
+    def __init__(self, student_controller, notification_controller):
         self.student_controller = student_controller
-
+        self.notification_controller = notification_controller
 
 
     def display_menu(self):
@@ -21,6 +21,8 @@ class StudentView:
     5. Delete Student
     6. Search Student
     7. Count Student
+    8. My Notifications
+    9. Mark Notification as Read
     0. back
     """
             console.clear()
@@ -59,6 +61,11 @@ class StudentView:
             elif choice == "7":
                 self.count_student()
 
+            elif choice == "8":
+               self.get_my_notification()
+
+            elif choice == "9":
+                self.mark_notification_as_read()
             elif choice == "0":
                 break
                    
@@ -115,7 +122,55 @@ Level : {student.level}
             )
             Prompt.ask("\nPress Enter to continue", default="")
 
+    def get_my_notification(self):
+        try:
+            student_id = int(Prompt.ask("Student ID"))
 
+            notifications = self.notification_controller.get_student_notifications(
+                student_id
+            )
+
+            if not notifications:
+                console.print(
+                    "[bold yellow]No notifications found.[/]"
+                )
+                Prompt.ask("\nPress Enter to continue", default="")
+                return
+
+            table = Table(
+                title="My Notifications",
+                border_style="cyan"
+            )
+
+            table.add_column("ID")
+            table.add_column("Title")
+            table.add_column("Message")
+            table.add_column("Status")
+
+            for student_notification in notifications:
+                notification = student_notification.notification
+
+                status = (
+                    "Read"
+                    if student_notification.is_read
+                    else "Unread"
+                )
+
+                table.add_row(
+                    str(student_notification.student_notification_id),
+                    notification.title,
+                    notification.message,
+                    status
+                )
+
+            console.print(Align.center(table))
+
+        except ValueError as error:
+            console.print(
+                f"[bold red]{error}[/]"
+            )
+
+        Prompt.ask("\nPress Enter to continue", default="")
     def get_all_student(self):
         try:
             students = self.student_controller.get_all_students()
@@ -150,7 +205,29 @@ Level : {student.level}
                 f"[bold red] {error} [/bold red]"
             )
         Prompt.ask("\nPress Enter to continue", default="")
+    def mark_notification_as_read(self):
+        try:
+            student_notification_id = int(
+                Prompt.ask("Notification ID")
+            )
 
+            result = self.notification_controller.mark_as_read(
+                student_notification_id
+            )
+
+            console.print(
+                f"[bold green]{result}[/]"
+            )
+
+        except ValueError as error:
+            console.print(
+                f"[bold red]{error}[/]"
+            )
+
+        Prompt.ask(
+            "\nPress Enter to continue",
+            default=""
+        )
     def update_student(self):
         try:
             student_id = int(Prompt.ask("Student ID"))

@@ -21,16 +21,30 @@ from repositories.student_notification_repository import StudentNotificationRepo
 from controllers.notification_controller import NotificationController
 from views.notification_view import NotificationView
 
+from views.submission_view import SubmissionView
+from controllers.submission_controller import SubmissionController
+from repositories.submission_repository import SubmissionRepo
 
 main_view = MainView()
 
+# notification repos
+notification_repo = NotificationRepo()
+student_notification_repo = StudentNotificationRepo()
+
 student_repo = StudentRepo()
 student_controller = StudentController(student_repo)
-student_view = StudentView(student_controller)
 
 teacher_repo = TeacherRepo()
 teacher_controller = TeacherController(teacher_repo)
 teacher_view = TeacherView(teacher_controller)
+
+notification_controller = NotificationController(
+    notification_repo,
+    student_notification_repo,
+    teacher_repo,
+    student_repo
+)
+student_view = StudentView(student_controller, notification_controller)
 
 course_repo = CourseRepo()
 course_controller = CourseController(course_repo, teacher_repo)
@@ -50,9 +64,15 @@ notification_controller = NotificationController(
     teacher_repo,
     student_repo
 )
-
 notification_view = NotificationView(notification_controller)
 
+submission_repo = SubmissionRepo()
+submission_controller = SubmissionController(
+    submission_repo,
+    student_repo,
+    exercise_repo
+)
+submission_view = SubmissionView(submission_controller)
 
 while True:
     choice = main_view.display_menu()
@@ -66,6 +86,9 @@ while True:
             exercise_view.display_menu()
     elif choice == "7":
         notification_view.display_menu()
+    elif choice == "6":
+          submission_view.display_menu()
     elif choice == "0":
+    
            break
     
