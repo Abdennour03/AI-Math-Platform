@@ -4,16 +4,25 @@ from models.exercise import Exercise
 from utils.grade_validation import GradeValidator
 
 class GradeController:
-    def __init__(self, grade_repo):
-       self.grade_repo = grade_repo
+    def __init__(self, grade_repo, student_repo, exercise_repo):
+        self.grade_repo = grade_repo
+        self.student_repo = student_repo
+        self.exercise_repo = exercise_repo
 
-    def create_grade(self, score, student, exercise):
+    def create_grade(self, score, student_id, exercise_id):
         # check if the student and exercise from Student and Exercise model 
         GradeValidator.validation_score(score)
-        if not isinstance(student, Student):
+        if not isinstance(student_id, int):
             raise ValueError("Invalid student.")
-        if not isinstance(exercise, Exercise):
+        if not isinstance(exercise_id, Exercise):
             raise ValueError("Invalid exercise")
+        student = self.student_repo.get_student(student_id)
+        if student is None:
+            raise ValueError("Student not found.")
+
+        exercise = self.exercise_repo.get_exercise(exercise_id)
+        if exercise is None:
+            raise ValueError("exercise not found.")
         # create grade
         grade = Grade(None, score, student, exercise)
         # add the grade
@@ -23,7 +32,7 @@ class GradeController:
     def get_grade(self, grade_id):
         if not isinstance(grade_id, int):
             raise ValueError("Grade ID must be an int")
-        grade = self.grade_repo.get_grad(grade_id)
+        grade = self.grade_repo.get_grade(grade_id)
         if grade is None:
             raise ValueError("Grade not found.")
         return grade
@@ -49,7 +58,7 @@ class GradeController:
         if grade is None:
             raise ValueError("Grade is nout Found .")
         self.grade_repo.delete_grade(grade_id)
-        return "Grade is deleted succssfully ."
+        return "Grade deleted succssfully ."
 
     def search_grade_by_student(self, student_id):
         #chech if student_id is integer
@@ -66,7 +75,7 @@ class GradeController:
             raise ValueError("exercise ID must be int.")
         
         #check if grade of student if found and return it 
-        grades = self.grade_repo.search_grade_by_student(exercise_id)
+        grades = self.grade_repo.search_grade_by_exercise(exercise_id)
         if not grades :
             raise ValueError("No grade found.")
         return grades

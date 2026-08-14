@@ -25,16 +25,23 @@ from views.submission_view import SubmissionView
 from controllers.submission_controller import SubmissionController
 from repositories.submission_repository import SubmissionRepo
 
+from views.grade_view import GradeView
+from controllers.grade_controller import GradeController
+from repositories.grade_repository import GradeRepo
+
+from database.database import Database
+db = Database()
+db.create_tables()
 main_view = MainView()
 
 # notification repos
 notification_repo = NotificationRepo()
 student_notification_repo = StudentNotificationRepo()
 
-student_repo = StudentRepo()
+student_repo = StudentRepo(db)
 student_controller = StudentController(student_repo)
 
-teacher_repo = TeacherRepo()
+teacher_repo = TeacherRepo(db)
 teacher_controller = TeacherController(teacher_repo)
 teacher_view = TeacherView(teacher_controller)
 
@@ -74,6 +81,19 @@ submission_controller = SubmissionController(
 )
 submission_view = SubmissionView(submission_controller)
 
+
+grade_repo = GradeRepo()
+
+grade_controller = GradeController(
+    grade_repo,
+    student_repo,
+    exercise_repo
+)
+
+grade_view = GradeView(
+    grade_controller
+)
+
 while True:
     choice = main_view.display_menu()
     if choice == "1":
@@ -84,10 +104,12 @@ while True:
             course_view.display_menu()
     elif choice == "4":
             exercise_view.display_menu()
+    elif choice == "5":
+        grade_view.display_menu()
+    elif choice == "6":
+        submission_view.display_menu()
     elif choice == "7":
         notification_view.display_menu()
-    elif choice == "6":
-          submission_view.display_menu()
     elif choice == "0":
     
            break

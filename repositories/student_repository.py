@@ -1,45 +1,161 @@
+from models.student import Student
+
 class StudentRepo:
-    def __init__(self):
-        self.students = []
-        self.next_id = 1
+    def __init__(self, db):
+        self.db = db
         
     def add_student(self, student):
-        student.student_id = self.next_id
-        self.next_id += 1
-        self.students.append(student)
+        self.db.cursor.execute("""
+    INSERT INTO students
+    (full_name, email, password, phone_number, level)
+    VALUES (?, ?, ?, ?, ?)
+        """,
+        (student.full_name,
+         student.email,
+         student.password,
+         student.phone_number,
+         student.level
+         ))
+        self.db.connection.commit()
+        student.student_id = self.db.cursor.lastrowid
+
+
 
     def get_student(self, student_id):
-        for student in self.students:
-            if student.student_id == student_id:
-                return student
-        return None
-    
+        self.db.cursor.execute("""
+        SELECT student_id, full_name, email,
+               password, phone_number, level
+        FROM students
+        WHERE student_id = ?
+    """, (student_id,))
+
+        row = self.db.cursor.fetchone()
+        if row is None:
+            return None
+
+        return Student(
+            row[0],
+            row[1],
+            row[2],
+            row[3],
+            row[4],
+            row[5]
+        )
     def get_all_student(self):
-        return self.students
+        self.db.cursor.execute("""
+        SELECT student_id, full_name, email,
+               password, phone_number, level
+        FROM students
+    """)
+
+        rows = self.db.cursor.fetchall()
+
+        students = []
+
+        for row in rows:
+            students.append(
+                Student(
+                    row[0],
+                    row[1],
+                    row[2],
+                    row[3],
+                    row[4],
+                    row[5]
+                )
+            )
+
+        return students
         
     def update_student(self, student_id, **kwargs):
-        for student in self.students:
-            if student.student_id == student_id:
-                for key, value in kwargs.items():
-                    if hasattr(student, key):
-                        setattr(student, key, value)
-                return True 
-        return False
+        student = self.get_student(student_id)
+        if not kwargs:
+            return False
+        if "full_name" in kwargs:
+            self.db.cursor.execute("""
+        UPDATE students
+            SET full_name = ?
+            WHERE student_id = ?
+            """, (kwargs["full_name"], student_id))
+
+
+        if "email" in kwargs:
+            self.db.cursor.execute("""
+        UPDATE students
+            SET email = ?
+            WHERE student_id = ?
+            """, (kwargs["email"], student_id))
+
+
+        if "password" in kwargs:
+                self.db.cursor.execute("""
+        UPDATE students
+            SET password = ?
+            WHERE student_id = ?
+            """, (kwargs["password"], student_id))
+
+
+        if "phone_number" in kwargs:
+                self.db.cursor.execute("""
+        UPDATE students
+            SET phone_number = ?
+            WHERE student_id = ?
+            """, (kwargs["phone_number"], student_id))
+
+
+        if "level" in kwargs:
+                self.db.cursor.execute("""
+        UPDATE students
+            SET level = ?
+            WHERE student_id = ?
+            """, (kwargs["level"], student_id))
+
+        self.db.connection.commit() 
+                
 
     def delete_student(self, student_id):
-        for index, student in enumerate(self.students):
-            if student.student_id == student_id:
-                del self.students[index]
-                return True
-        return False
-        
-    def search_student(self, full_name):
-        results = []
-        for student in self.students:
-            if full_name.lower() in student.full_name.lower():
-                results.append(student)
-        return results
+        student = self.get_student(student_id)
+        if student is None:
+             return False
+        self.db.cursor.execute("""
+DELETE FROM students
+WHERE student_id = ?""", (student_id,))
+        self.db.connection.commit()
+        return True
+
+    
+    def search_student(self, name):
+
+        self.db.cursor.execute("""
+            SELECT student_id, full_name, email,
+                password, phone_number, level
+            FROM students
+            WHERE full_name LIKE ?
+        """, (f"%{name}%",))
+
+        rows = self.db.cursor.fetchall()
+        students = []
+
+        for row in rows:
+            students.append(
+                Student(
+                    row[0],
+                    row[1],
+                    row[2],
+                    row[3],
+                    row[4],
+                    row[5]
+                )
+            )
+
+        return students
 
     
     def count_students(self):
-        return len(self.students)
+
+        self.db.cursor.execute("""
+            SELECT COUNT(*)
+            FROM students
+        """)
+        result = self.db.cursor.fetchone()
+
+        return result[0]
