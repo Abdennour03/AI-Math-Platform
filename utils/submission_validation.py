@@ -1,7 +1,7 @@
 class SubmissionValidator:
     @staticmethod
     def validation_status(status):
-        status = status.stip().lower()
+        status = status.strip().lower()
         allowed_status = {
             "submitted",
             "late",

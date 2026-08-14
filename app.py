@@ -35,10 +35,14 @@ db.create_tables()
 main_view = MainView()
 
 # notification repos
-notification_repo = NotificationRepo()
-student_notification_repo = StudentNotificationRepo()
-
 student_repo = StudentRepo(db)
+notification_repo = NotificationRepo(db)
+student_notification_repo = StudentNotificationRepo(
+    db,
+    student_repo,
+    notification_repo
+)
+
 student_controller = StudentController(student_repo)
 
 teacher_repo = TeacherRepo(db)
@@ -53,17 +57,13 @@ notification_controller = NotificationController(
 )
 student_view = StudentView(student_controller, notification_controller)
 
-course_repo = CourseRepo()
+course_repo = CourseRepo(db)
 course_controller = CourseController(course_repo, teacher_repo)
 course_view = CourseView(course_controller)
 
-exercise_repo = ExerciseRepo()
+exercise_repo = ExerciseRepo(db)
 exercise_controller = ExerciseController(exercise_repo, course_repo)
 exercise_view = ExerciseView(exercise_controller)
-
-
-notification_repo = NotificationRepo()
-student_notification_repo = StudentNotificationRepo()
 
 notification_controller = NotificationController(
     notification_repo,
@@ -73,7 +73,7 @@ notification_controller = NotificationController(
 )
 notification_view = NotificationView(notification_controller)
 
-submission_repo = SubmissionRepo()
+submission_repo = SubmissionRepo(db, student_repo, exercise_repo)
 submission_controller = SubmissionController(
     submission_repo,
     student_repo,
@@ -82,7 +82,7 @@ submission_controller = SubmissionController(
 submission_view = SubmissionView(submission_controller)
 
 
-grade_repo = GradeRepo()
+grade_repo = GradeRepo(db, student_repo, exercise_repo)
 
 grade_controller = GradeController(
     grade_repo,

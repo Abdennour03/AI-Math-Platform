@@ -14,7 +14,7 @@ class GradeController:
         GradeValidator.validation_score(score)
         if not isinstance(student_id, int):
             raise ValueError("Invalid student.")
-        if not isinstance(exercise_id, Exercise):
+        if not isinstance(exercise_id, int):
             raise ValueError("Invalid exercise")
         student = self.student_repo.get_student(student_id)
         if student is None:

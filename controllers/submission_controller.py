@@ -25,7 +25,7 @@ class SubmissionController:
                 
         # validate status 
         SubmissionValidator.validation_status(status)
-        submission = Submission(None, student, exercise, submission_date, file_path, status)
+        submission = Submission(None, student_id, exercise, submission_date, file_path, status)
         self.submission_repo.add_submission(submission)
 
         return "Submission created successfullty."

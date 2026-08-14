@@ -95,35 +95,48 @@ Semester : {course.semester}
             console.print(f"[bold red]{error}[/]")
             Prompt.ask("\nPress Enter to continue", default="")
     def get_all_courses(self):
-            
+
         try:
             courses = self.course_controller.get_all_courses()
+
             if not courses:
                 console.print("[bold red]No courses found.[/]")
                 console.print("[bold yellow]Press Enter to continue[/]")
                 return
-            tabel = Table(title="Courses", border_style="cyan")
-            tabel.add_column("ID")
-            tabel.add_column("Course Name")
-            tabel.add_column("Level")
-            tabel.add_column("Semester")
+
+            table = Table(
+                title="Courses",
+                border_style="cyan"
+            )
+
+            table.add_column("ID")
+            table.add_column("Course Name")
+            table.add_column("Teacher")
+            table.add_column("Level")
+            table.add_column("Semester")
+
             for course in courses:
-                    tabel.add_row(
-                        str(course.course_id),
-                        course.course_name,
-                        course.level,
-                        course.semester,
-                
-                    )
-            console.print(
-                    Align.center(tabel)
+                table.add_row(
+                    str(course.course_id),
+                    course.course_name,
+                    course.teacher.full_name,
+                    course.level,
+                    course.semester
                 )
-                    
+
+            console.print(
+                Align.center(table)
+            )
+
         except ValueError as error:
             console.print(
-                f"[bold red] {error}[/]"
+                f"[bold red]{error}[/]"
             )
-        Prompt.ask("\nPress Enter to continue", default="")
+
+        Prompt.ask(
+            "\nPress Enter to continue",
+            default=""
+        )
 
     def update_course(self):
         try:

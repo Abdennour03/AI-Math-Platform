@@ -30,13 +30,13 @@ class StudentView:
                 Align.center(
                     Panel.fit(
                         menu,
-                        title= "[bold cyan]Student Management[/bold cyan]",
+                        title= "[bold cyan]Student Management[/]",
                         border_style="cyan"
                     )
                 )
             )
             choice = Prompt.ask(
-                "[bold yellow]Choose an option[/bold yellow]"
+                "[bold yellow]Choose an option[/]"
             )
 
             
@@ -88,7 +88,7 @@ class StudentView:
 
         except ValueError as error:
             console.print(
-                f"[bodl red] {error} [/bold red]"
+                f"[bold red] {error} [/]"
             )
         Prompt.ask("\nPrees Enter to continue", default="")
     def get_student(self):

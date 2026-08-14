@@ -1,63 +1,117 @@
+from models.student_notification import StudentNotification
+
+
 class StudentNotificationRepo:
-    def __init__(self):
-        self.student_notifications = []
-        self.next_id = 1
+
+    def __init__(self, db, student_repo, notification_repo):
+        self.db = db
+        self.student_repo = student_repo
+        self.notification_repo = notification_repo
+
+        self.db.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS student_notifications (
+                student_notification_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id INTEGER NOT NULL,
+                notification_id INTEGER NOT NULL,
+                is_read INTEGER NOT NULL DEFAULT 0,
+
+                FOREIGN KEY (student_id)
+                    REFERENCES students(student_id),
+
+                FOREIGN KEY (notification_id)
+                    REFERENCES notifications(notification_id)
+            )
+        """)
+
+        self.db.connection.commit()
+
 
     def add_student_notification(self, student_notification):
 
-        student_notification.student_notification_id = self.next_id
-        self.next_id += 1
+        self.db.cursor.execute("""
+            INSERT INTO student_notifications
+            (student_id, notification_id, is_read)
+            VALUES (?, ?, ?)
+        """, (
+            student_notification.student.student_id,
+            student_notification.notification.notification_id,
+            int(student_notification.is_read)
+        ))
 
-        self.student_notifications.append(
-            student_notification
+        self.db.connection.commit()
+
+        student_notification.student_notification_id = (
+            self.db.cursor.lastrowid
         )
 
-    def get_student_notification(self, student_notification_id):
-
-        for item in self.student_notifications:
-
-            if item.student_notification_id == student_notification_id:
-                return item
-
-        return None
-
-    def get_all_student_notifications(self):
-
-        return self.student_notifications
 
     def get_notifications_for_student(self, student_id):
 
-        return [
-            item
-            for item in self.student_notifications
-            if item.student.student_id == student_id
-        ]
+        self.db.cursor.execute("""
+            SELECT
+                student_notification_id,
+                student_id,
+                notification_id,
+                is_read
+            FROM student_notifications
+            WHERE student_id = ?
+        """, (student_id,))
+
+        rows = self.db.cursor.fetchall()
+
+        result = []
+
+        for row in rows:
+
+            notification_id = row[2]
+
+            self.db.cursor.execute("""
+                SELECT
+                    notification_id,
+                    title,
+                    message,
+                    sender_id,
+                    created_at
+                FROM notifications
+                WHERE notification_id = ?
+            """, (notification_id,))
+
+            notification_row = self.db.cursor.fetchone()
+
+            if notification_row is None:
+                continue
+
+            notification = self.notification_repo.get_notification(
+                notification_id
+            )
+
+            student = self.student_repo.get_student(
+                row[1]
+            )
+
+            if student is None:
+                continue
+
+            student_notification = StudentNotification(
+                row[0],
+                student,
+                notification,
+                bool(row[3])
+            )
+
+            result.append(student_notification)
+
+        return result
+
 
     def mark_as_read(self, student_notification_id):
 
-        student_notification = self.get_student_notification(
-            student_notification_id
-        )
+        self.db.cursor.execute("""
+            UPDATE student_notifications
+            SET is_read = 1
+            WHERE student_notification_id = ?
+        """, (student_notification_id,))
 
-        if student_notification is None:
-            return False
+        self.db.connection.commit()
 
-        student_notification.is_read = True
-
-        return True
-
-    def delete_student_notification(self, student_notification_id):
-
-        for index, item in enumerate(self.student_notifications):
-
-            if item.student_notification_id == student_notification_id:
-
-                del self.student_notifications[index]
-
-                return True
-
-        return False
-
-    def count_student_notifications(self):
-
-        return len(self.student_notifications)
+        return self.db.cursor.rowcount > 0

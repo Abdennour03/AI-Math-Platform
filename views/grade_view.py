@@ -61,7 +61,7 @@ class GradeView:
             student_id = int(Prompt.ask("Student ID"))
             exercise_id = int(Prompt.ask("Exercise ID"))
             score = float(Prompt.ask("Score"))
-            result = self.grade_controller.create_grade(student_id, exercise_id)
+            result = self.grade_controller.create_grade(score, student_id, exercise_id)
             console.print(f"[bold green]{result}[/]")
         except ValueError as error:
             console.print(f"[bold red]{error}[/]")

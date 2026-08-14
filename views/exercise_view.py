@@ -60,7 +60,7 @@ class ExerciseView:
     def add_exercise(self):
         exercise_name = Prompt.ask("exercise Name :", default="")
         level = Prompt.ask("Level :", default="")
-        course_id = int(Prompt.ask("course :", default=""))
+        course_id = int(Prompt.ask("course ID :", default=""))
 
         try:
             result = self.exercise_controller.create_exercise(exercise_name, course_id, level)
