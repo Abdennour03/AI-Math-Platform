@@ -1,0 +1,233 @@
+from fastapi import APIRouter, HTTPException
+
+from api.schemas.submission_schema import (
+    SubmissionCreate,
+    SubmissionUpdate,
+    SubmissionResponse
+)
+
+from api.dependencies import submission_controller
+
+
+router = APIRouter(
+    prefix="/submissions",
+    tags=["submissions"]
+)
+
+
+def submission_to_response(submission):
+
+    return {
+        "submission_id": submission.submission_id,
+        "student_id": submission.student_id,
+        "exercise_id": submission.exercise.exercise_id,
+        "submission_date": submission.submission_date,
+        "file_path": submission.file_path,
+        "status": submission.status
+    }
+
+
+@router.post(
+    "/",
+    response_model=dict
+)
+def create_submission(data: SubmissionCreate):
+
+    try:
+
+        result = submission_controller.create_submission(
+            data.student_id,
+            data.exercise_id,
+            data.submission_date,
+            data.file_path,
+            data.status
+        )
+
+        return {
+            "message": result
+        }
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+
+@router.get(
+    "/",
+    response_model=list[SubmissionResponse]
+)
+def get_all_submissions():
+
+    submissions = (
+        submission_controller
+        .get_all_submissions()
+    )
+
+    return [
+        submission_to_response(submission)
+        for submission in submissions
+    ]
+
+
+@router.get(
+    "/student/{student_id}",
+    response_model=list[SubmissionResponse]
+)
+def get_submissions_by_student(
+    student_id: int
+):
+
+    try:
+
+        submissions = (
+            submission_controller
+            .search_submission_by_student(
+                student_id
+            )
+        )
+
+        return [
+            submission_to_response(submission)
+            for submission in submissions
+        ]
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(error)
+        )
+
+@router.get(
+    "/exercise/{exercise_id}",
+    response_model=list[SubmissionResponse]
+)
+def get_submissions_by_exercise(
+    exercise_id: int
+):
+
+    try:
+
+        submissions = (
+            submission_controller
+            .search_submission_by_exercise(
+                exercise_id
+            )
+        )
+
+        return [
+            submission_to_response(submission)
+            for submission in submissions
+        ]
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(error)
+        )
+
+@router.get(
+    "/count",
+    response_model=dict
+)
+def count_submissions():
+
+    return {
+        "count":
+            submission_controller
+            .count_submissions()
+    }
+
+@router.get(
+    "/{submission_id}",
+    response_model=SubmissionResponse
+)
+def get_submission(
+    submission_id: int
+):
+
+    try:
+
+        submission = (
+            submission_controller
+            .get_submission(
+                submission_id
+            )
+        )
+
+        return submission_to_response(
+            submission
+        )
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(error)
+        )
+
+@router.put(
+    "/{submission_id}",
+    response_model=dict
+)
+def update_submission(
+    submission_id: int,
+    data: SubmissionUpdate
+):
+
+    try:
+
+        updates = data.model_dump(
+            exclude_none=True
+        )
+
+        result = (
+            submission_controller
+            .update_submission(
+                submission_id,
+                **updates
+            )
+        )
+
+        return {
+            "message": result
+        }
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+@router.delete(
+    "/{submission_id}",
+    response_model=dict
+)
+def delete_submission(
+    submission_id: int
+):
+
+    try:
+
+        result = (
+            submission_controller
+            .delete_submission(
+                submission_id
+            )
+        )
+
+        return {
+            "message": result
+        }
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(error)
+        )

@@ -28,12 +28,11 @@ class NotificationRepo:
         self.db.cursor.execute("""
             INSERT INTO notifications
             (title, message, sender_id, created_at)
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
         """, (
             notification.title,
             notification.message,
-            notification.sender.teacher_id,
-            notification.created_at
+            notification.sender.teacher_id
         ))
 
         self.db.connection.commit()
@@ -80,6 +79,7 @@ class NotificationRepo:
             row[1],
             row[2],
             teacher,
+            None,
             row[4]
         )
 
@@ -118,12 +118,13 @@ class NotificationRepo:
             )
 
             notification = Notification(
-                row[0],
-                row[1],
-                row[2],
-                teacher,
-                row[4]
-            )
+                                row[0],
+                                row[1],
+                                row[2],
+                                teacher,
+                                None,
+                                row[4]
+                            )
 
             notifications.append(notification)
 
@@ -242,12 +243,13 @@ class NotificationRepo:
             )
 
             notification = Notification(
-                row[0],
-                row[1],
-                row[2],
-                teacher,
-                row[4]
-            )
+                    row[0],
+                    row[1],
+                    row[2],
+                    teacher,
+                    None,
+                    row[4]
+                )
 
             notifications.append(notification)
 

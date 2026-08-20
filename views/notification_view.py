@@ -122,7 +122,7 @@ border_style="cyan"
                 str(notification.notification_id),
                 notification.title,
                 notification.message,
-                notification.teacher.full_name,
+                notification.sender.full_name,
                 str(notification.created_at)
             )
             console.print(Align.center(tabel))

@@ -69,4 +69,4 @@ class ExerciseController:
         return exercises
 
     def count_exercise(self):
-        return self.exercise_repo.count_exercise()
+        return self.exercise_repo.count_exercises()
