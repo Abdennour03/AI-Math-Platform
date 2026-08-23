@@ -1,6 +1,6 @@
 from models.student import Student
 from utils.student_validation import StudentValidator
-
+from utils.security import hash_password
 class StudentController:
     def __init__(self, student_repo):
         self.student_repo = student_repo
@@ -12,9 +12,10 @@ class StudentController:
         validation.validate_password(password)
         validation.validate_phone_number(phone_number)
         validation.validate_level(level)
-        student = Student(None, full_name, email, password, phone_number, level)
+        hashed_password = hash_password(password)
+        student = Student(None, full_name, email, hashed_password, phone_number, level)
         self.student_repo.add_student(student)
-        return "Student created successfuly."
+        return student
         
 
     def get_student(self, student_id):

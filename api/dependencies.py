@@ -21,6 +21,8 @@ from controllers.submission_controller import SubmissionController
 
 from repositories.grade_repository import GradeRepo
 from controllers.grade_controller import GradeController
+
+from controllers.auth_controller import AuthController
 db = Database()
 
 # Student
@@ -73,4 +75,9 @@ grade_controller = GradeController(
     grade_repo,
     student_repo,
     exercise_repo
+)
+
+auth_controller= AuthController(
+    student_repo,
+    teacher_repo
 )

@@ -183,3 +183,29 @@ class TeacherRepo:
         result = self.db.cursor.fetchone()
 
         return result[0]
+
+    def get_teacher_by_email(self, email):
+
+        self.db.cursor.execute("""
+            SELECT
+                teacher_id,
+                full_name,
+                email,
+                password,
+                phone_number
+            FROM teachers
+            WHERE email = ?
+        """, (email,))
+
+        row = self.db.cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return Teacher(
+            row[0],
+            row[1],
+            row[2],
+            row[3],
+            row[4]
+        )

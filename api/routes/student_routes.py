@@ -41,8 +41,12 @@ def create_student(data: StudentCreate):
         )
 
     return {
-        "message": result
-        }
+        "student_id": result.student_id,
+        "full_name": result.full_name,
+        "email": result.email,
+        "phone_number": result.phone_number,
+        "level": result.level
+    }
 
 from api.schemas.student_schema import StudentUpdate
 

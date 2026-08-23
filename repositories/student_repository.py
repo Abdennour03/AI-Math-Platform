@@ -159,3 +159,31 @@ WHERE student_id = ?""", (student_id,))
         result = self.db.cursor.fetchone()
 
         return result[0]
+
+    def get_student_by_email(self, email):
+
+        self.db.cursor.execute("""
+            SELECT
+                student_id,
+                full_name,
+                email,
+                password,
+                phone_number,
+                level
+            FROM students
+            WHERE email = ?
+        """, (email,))
+
+        row = self.db.cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return Student(
+            row[0],
+            row[1],
+            row[2],
+            row[3],
+            row[4],
+            row[5]
+        )
