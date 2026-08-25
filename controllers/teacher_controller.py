@@ -1,5 +1,6 @@
 from models.teacher import Teacher
 from utils.teacher_validation import TeacherValidator
+from utils.security import hash_password
 
 class TeacherController:
     def __init__(self, teacher_repo):
@@ -12,9 +13,10 @@ class TeacherController:
         validation.validate_email(email)
         validation.validate_password(password)
         validation.validate_phone_number(phone_number)
-        teacher = Teacher(None, full_name, email, password, phone_number)
+        hashed_password = hash_password(password)
+        teacher = Teacher(None, full_name, email, hashed_password, phone_number)
         self.teacher_repo.add_teacher(teacher)
-        return "teacher created successfuly."
+        return teacher
         
 
     def get_teacher(self, teacher_id):
@@ -33,22 +35,31 @@ class TeacherController:
             return teachers
         
     def update_teacher(self, teacher_id, **kwargs):
-            teacher = self.teacher_repo.get_teacher(teacher_id)
-            if teacher is None:
-                raise ValueError("teachernot found.")
-            if "full_name" in kwargs:
-                TeacherValidator.validate_name(kwargs["full_name"])
-            if "email" in kwargs:
-                TeacherValidator.validate_name(kwargs["email"])
-            if "password" in kwargs:
-                TeacherValidator.validate_name(kwargs["password"])
-            if "phone_number" in kwargs:
-                TeacherValidator.validate_name(kwargs["phone_number"])
-            if "level" in kwargs:
-                TeacherValidator.validate_name(kwargs["level"])
-    
-            self.teacher_repo.update_teacher(teacher_id, **kwargs)
-            return "teacher updated successfully"
+
+        teacher = self.teacher_repo.get_teacher(teacher_id)
+
+        if teacher is None:
+            raise ValueError("Teacher not found.")
+
+        if "full_name" in kwargs:
+            TeacherValidator.validate_name(kwargs["full_name"])
+
+        if "email" in kwargs:
+            TeacherValidator.validate_email(kwargs["email"])
+
+        if "password" in kwargs:
+            TeacherValidator.validate_password(kwargs["password"])
+            kwargs["password"] = hash_password(kwargs["password"])
+
+        if "phone_number" in kwargs:
+            TeacherValidator.validate_phone_number(kwargs["phone_number"])
+
+        self.teacher_repo.update_teacher(
+            teacher_id,
+            **kwargs
+        )
+
+        return "Teacher updated successfully"
     
     def delete_teacher(self, teacher_id):
             if not isinstance(teacher_id, int):

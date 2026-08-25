@@ -73,8 +73,8 @@ class CourseRepo:
             teacher_row[0],
             teacher_row[1],
             teacher_row[2],
-            teacher_row[3],
-            teacher_row[4]
+            teacher_row[4],
+            teacher_row[3]
         )
 
         return Course(
@@ -124,8 +124,8 @@ class CourseRepo:
                 row[0],  # course_id
                 row[1],  # course_name
                 teacher,
-                row[2],  # semester
-                row[3]   # level
+                row[3],  # semester
+                row[2]   # level
             )
 
             courses.append(course)
@@ -247,8 +247,8 @@ class CourseRepo:
                     row[0],
                     row[1],
                     teacher,
-                    row[3],
-                    row[4]
+                    row[4],
+                    row[3]
                 )
             )
 
@@ -265,3 +265,54 @@ class CourseRepo:
         result = self.db.cursor.fetchone()
 
         return result[0]
+
+
+    def get_courses_by_level(self, level):
+
+        level = level.strip().upper()
+
+        self.db.cursor.execute("""
+            SELECT course_id, course_name, teacher_id, semester, level
+            FROM courses
+            WHERE UPPER(TRIM(level)) = ?
+        """, (level,))
+
+        matched_rows = self.db.cursor.fetchall()
+
+        from models.teacher import Teacher
+
+        courses = []
+
+        for row in matched_rows:
+            teacher_id = row[2]
+
+            self.db.cursor.execute("""
+                SELECT teacher_id, full_name, email, password, phone_number
+                FROM teachers
+                WHERE teacher_id = ?
+            """, (teacher_id,))
+
+            teacher_row = self.db.cursor.fetchone()
+
+            if teacher_row is None:
+                continue
+
+            teacher = Teacher(
+                teacher_row[0],
+                teacher_row[1],
+                teacher_row[2],
+                teacher_row[3],
+                teacher_row[4]
+            )
+
+            courses.append(
+                Course(
+                    row[0],        # course_id
+                    row[1],        # course_name
+                    teacher,
+                    row[4],        # level
+                    row[3]         # semester
+                )
+            )
+
+        return courses

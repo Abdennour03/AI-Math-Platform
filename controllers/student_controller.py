@@ -38,10 +38,14 @@ class StudentController:
             raise ValueError("studentnot found.")
         if "full_name" in kwargs:
             StudentValidator.validate_name(kwargs["full_name"])
+            
         if "email" in kwargs:
             StudentValidator.validate_name(kwargs["email"])
+
         if "password" in kwargs:
             StudentValidator.validate_name(kwargs["password"])
+            kwargs["password"] = hash_password(kwargs["password"])
+
         if "phone_number" in kwargs:
             StudentValidator.validate_name(kwargs["phone_number"])
         if "level" in kwargs:

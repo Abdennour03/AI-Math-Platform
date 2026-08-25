@@ -6,8 +6,46 @@ router = APIRouter(
     prefix="/students",
     tags = ["Students"]
 )
+from fastapi import Depends
+from api.dependencies import require_student
 
 
+@router.get("/me", response_model=StudentResponse)
+def get_my_profile(
+    current_user=Depends(require_student)
+):
+    return {
+        "student_id": current_user.student_id,
+        "full_name": current_user.full_name,
+        "email": current_user.email,
+        "phone_number": current_user.phone_number,
+        "level": current_user.level
+    }
+from api.dependencies import require_student
+from fastapi import Depends
+from api.dependencies import course_controller
+
+@router.get("/me/courses")
+def get_my_courses(
+    current_user=Depends(require_student)
+):
+    courses = course_controller.get_courses_by_level(
+        current_user.level
+    )
+
+    return [
+        {
+            "course_id": course.course_id,
+            "course_name": course.course_name,
+            "semester": course.semester,
+            "level": course.level,
+            "teacher": {
+                "teacher_id": course.teacher.teacher_id,
+                "full_name": course.teacher.full_name
+            }
+        }
+        for course in courses
+    ]
 @router.get("/", response_model=list[StudentResponse])
 def get_all_student():
     students = student_controller.get_all_students()
@@ -130,3 +168,4 @@ def get_student(student_id: int):
         "phone_number": student.phone_number,
         "level": student.level
     }
+

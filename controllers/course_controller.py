@@ -66,3 +66,7 @@ class CourseController:
 
     def count_courses(self):
         return self.course_repo.count_courses()
+
+    def get_courses_by_level(self, level):
+        courses = self.course_repo.get_courses_by_level(level)
+        return courses

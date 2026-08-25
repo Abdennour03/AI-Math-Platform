@@ -81,3 +81,82 @@ auth_controller= AuthController(
     student_repo,
     teacher_repo
 )
+
+"""
+create :
+get_current_user()
+require_student()
+require_teacher()
+
+"""
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+from utils.security import decode_access_token
+security = HTTPBearer()
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    token = credentials.credentials
+
+    try:
+        payload = decode_access_token(token)
+
+        user_id = payload.get("sub")
+        role = payload.get("role")
+
+        if user_id is None or role is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid token"
+            )
+
+        user_id = int(user_id)
+
+        if role == "student":
+            user = student_repo.get_student(user_id)
+
+        elif role == "teacher":
+            user = teacher_repo.get_teacher(user_id)
+
+        else:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid role"
+            )
+
+        if user is None:
+            raise HTTPException(
+                status_code=401,
+                detail="User not found"
+            )
+
+        return user
+
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+def require_student(current_user=Depends(get_current_user)):
+
+    if not hasattr(current_user, "student_id"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Student access required"
+        )
+
+    return current_user
+
+
+def require_teacher(current_user=Depends(get_current_user)):
+
+    if not hasattr(current_user, "teacher_id"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Teacher access required"
+        )
+
+    return current_user
