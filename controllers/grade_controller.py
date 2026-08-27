@@ -82,3 +82,15 @@ class GradeController:
 
     def count_grades(self):
         return self.grade_repo.count_grades()
+
+    def get_grades_by_student(self, student_id):
+
+        if not isinstance(student_id, int):
+            raise ValueError("Student ID must be int.")
+
+        student = self.student_repo.get_student(student_id)
+
+        if student is None:
+            raise ValueError("Student not found.")
+
+        return self.grade_repo.search_grade_by_student(student_id)

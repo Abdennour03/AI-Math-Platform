@@ -2,6 +2,7 @@ from models.student import Student
 from models.exercise import Exercise
 from utils.submission_validation import SubmissionValidator
 from models.submission import Submission
+from datetime import datetime
 
 
 
@@ -11,24 +12,40 @@ class SubmissionController:
         self.student_repo = student_repo
         self.exercise_repo = exercise_repo
 
-    def create_submission(self, student_id, exercise_id, submission_date, file_path, status):
+    def create_submission(self, student_id, exercise_id, file_path):
+
         if not isinstance(student_id, int):
             raise ValueError("Invalid student")
+
         if not isinstance(exercise_id, int):
             raise ValueError("Invalid exercise")
+
         student = self.student_repo.get_student(student_id)
+
         if student is None:
             raise ValueError("Student not found.")
+
         exercise = self.exercise_repo.get_exercise(exercise_id)
+
         if exercise is None:
-            raise ValueError("exercise not found.")
-                
-        # validate status 
-        SubmissionValidator.validation_status(status)
-        submission = Submission(None, student_id, exercise, submission_date, file_path, status)
+            raise ValueError("Exercise not found.")
+
+        submission_date = datetime.now()
+
+        status = "submitted"
+
+        submission = Submission(
+            None,
+            student_id,
+            exercise,
+            submission_date,
+            file_path,
+            status
+        )
+
         self.submission_repo.add_submission(submission)
 
-        return "Submission created successfullty."
+        return submission
     def get_submission(self, submission_id):
         if not isinstance(submission_id, int):
             raise ValueError("Submission ID mustbe int.")
@@ -84,3 +101,15 @@ class SubmissionController:
     
     def count_submissions(self):
         return self.submission_repo.count_submissions()
+
+    def get_submissions_by_student(self, student_id):
+
+        if not isinstance(student_id, int):
+            raise ValueError("Student ID must be int.")
+
+        student = self.student_repo.get_student(student_id)
+
+        if student is None:
+            raise ValueError("Student not found.")
+
+        return self.submission_repo.get_submissions_by_student(student_id)

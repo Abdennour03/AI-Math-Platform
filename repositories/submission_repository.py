@@ -300,3 +300,41 @@ class SubmissionRepo:
         result = self.db.cursor.fetchone()
 
         return result[0]
+
+    def get_submissions_by_student(self, student_id):
+
+        self.db.cursor.execute("""
+            SELECT
+                submission_id,
+                student_id,
+                exercise_id,
+                submission_date,
+                file_path,
+                status
+            FROM submissions
+            WHERE student_id = ?
+        """, (student_id,))
+
+        rows = self.db.cursor.fetchall()
+
+        submissions = []
+
+        for row in rows:
+
+            exercise = self.exercise_repo.get_exercise(row[2])
+
+            if exercise is None:
+                continue
+
+            submission = Submission(
+                row[0],
+                row[1],
+                exercise,
+                row[3],
+                row[4],
+                row[5]
+            )
+
+            submissions.append(submission)
+
+        return submissions

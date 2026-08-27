@@ -13,10 +13,9 @@ class ExerciseRepo:
                 exercise_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 exercise_name TEXT NOT NULL,
                 course_id INTEGER NOT NULL,
-                level TEXT NOT NULL,
                 FOREIGN KEY (course_id)
                     REFERENCES courses(course_id)
-            )
+)
         """)
 
         self.db.connection.commit()
@@ -101,7 +100,6 @@ class ExerciseRepo:
             row[0],
             row[1],
             course,
-            row[3]
         )
 
 
@@ -157,7 +155,6 @@ class ExerciseRepo:
                 row[0],
                 row[1],
                 course,
-                row[2]
             )
 
             exercises.append(exercise)
@@ -279,7 +276,6 @@ class ExerciseRepo:
                 row[0],
                 row[1],
                 course,
-                row[2]
             )
 
             exercises.append(exercise)
@@ -297,3 +293,65 @@ class ExerciseRepo:
         result = self.db.cursor.fetchone()
 
         return result[0]
+
+    def get_exercises_by_level(self, level):
+
+        level = level.strip().upper()
+
+        self.db.cursor.execute("""
+            SELECT
+                exercises.exercise_id,
+                exercises.exercise_name,
+                exercises.level,
+                courses.course_id,
+                courses.course_name,
+                courses.teacher_id,
+                courses.semester,
+                courses.level,
+                teachers.teacher_id,
+                teachers.full_name,
+                teachers.email,
+                teachers.password,
+                teachers.phone_number
+            FROM exercises
+
+            JOIN courses
+                ON exercises.course_id = courses.course_id
+
+            JOIN teachers
+                ON courses.teacher_id = teachers.teacher_id
+
+            WHERE UPPER(TRIM(exercises.level)) = ?
+        """, (level,))
+
+        rows = self.db.cursor.fetchall()
+
+        exercises = []
+
+        for row in rows:
+
+            teacher = Teacher(
+                row[8],
+                row[9],
+                row[10],
+                row[11],
+                row[12]
+            )
+
+            course = Course(
+                row[3],
+                row[4],
+                teacher,
+                row[6],
+                row[7]
+            )
+
+            exercise = Exercise(
+                row[0],
+                row[1],
+                course,
+            )
+
+            exercises.append(exercise)
+
+        return exercises

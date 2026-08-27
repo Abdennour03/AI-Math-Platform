@@ -6,16 +6,15 @@ class ExerciseController:
         self.exercise_repo = exercise_repo
         self.course_repo = course_repo
 
-    def create_exercise(self, exercise_name, course_id, level):
+    def create_exercise(self, exercise_name, course_id):
 
         ExerciseValidator.validation_exercise_name(exercise_name)
-        ExerciseValidator.validation_level(level)
 
         #find the course id of the exrcise we need 
         course = self.course_repo.get_course(course_id)
         if course is None:
             raise ValueError("No course found.")
-        exercise = Exercise(None, exercise_name, course, level)
+        exercise = Exercise(None, exercise_name, course)
 
         self.exercise_repo.add_exercise(exercise)
         return "Exercise created successfully."
@@ -70,3 +69,10 @@ class ExerciseController:
 
     def count_exercise(self):
         return self.exercise_repo.count_exercises()
+
+    
+    def get_exercises_by_level(self, level):
+
+        ExerciseValidator.validation_level(level)
+
+        return self.exercise_repo.get_exercises_by_level(level)

@@ -3,12 +3,8 @@ from datetime import datetime
 
 
 class SubmissionCreate(BaseModel):
-    student_id: int
     exercise_id: int
-    submission_date: datetime
     file_path: str
-    status: str
-
 
 class SubmissionUpdate(BaseModel):
     submission_date: datetime | None = None

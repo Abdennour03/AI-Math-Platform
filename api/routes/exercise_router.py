@@ -25,7 +25,6 @@ def get_all_exercises():
             "exercise_id": exercise.exercise_id,
             "exercise_name": exercise.exercise_name,
             "course_id": exercise.course.course_id,
-            "level": exercise.level
         }
         for exercise in exercises
     ]
@@ -41,7 +40,6 @@ def get_exercise(exercise_id: int):
             "exercise_id": exercise.exercise_id,
             "exercise_name": exercise.exercise_name,
             "course_id": exercise.course.course_id,
-            "level": exercise.level
         }
 
     except ValueError as error:
@@ -60,7 +58,6 @@ def create_exercise(data: ExerciseCreate):
         result = exercise_controller.create_exercise(
             data.exercise_name,
             data.course_id,
-            data.level
         )
 
         return {
@@ -135,7 +132,6 @@ def search_exercises(query: str):
                 "exercise_id": exercise.exercise_id,
                 "exercise_name": exercise.exercise_name,
                 "course_id": exercise.course.course_id,
-                "level": exercise.level
             }
             for exercise in exercises
         ]

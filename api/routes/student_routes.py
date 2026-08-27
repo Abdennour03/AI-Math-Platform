@@ -46,6 +46,151 @@ def get_my_courses(
         }
         for course in courses
     ]
+
+from api.dependencies import require_student
+from fastapi import Depends
+from api.dependencies import exercise_controller
+
+@router.get("/me/exercises")
+def get_my_exercises(
+    current_user=Depends(require_student)
+):
+
+    exercises = exercise_controller.get_exercises_by_level(
+        current_user.level
+    )
+
+    return [
+        {
+            "exercise_id": exercise.exercise_id,
+            "exercise_name": exercise.exercise_name,
+            "course": {
+                "course_id": exercise.course.course_id,
+                "course_name": exercise.course.course_name,
+                "semester": exercise.course.semester
+            }
+        }
+        for exercise in exercises
+    ]
+
+from api.dependencies import require_student
+from api.dependencies import submission_controller
+from fastapi import Depends
+
+
+@router.get("/me/submissions")
+def get_my_submissions(
+    current_user=Depends(require_student)
+):
+
+    submissions = submission_controller.get_submissions_by_student(
+        current_user.student_id
+    )
+
+    return [
+        {
+            "submission_id": submission.submission_id,
+            "student_id": submission.student_id,
+            "exercise_id": submission.exercise.exercise_id,
+            "submission_date": submission.submission_date,
+            "file_path": submission.file_path,
+            "status": submission.status
+        }
+        for submission in submissions
+    ]
+
+from api.schemas.submission_schema import (
+    SubmissionCreate,
+    SubmissionResponse
+)
+
+from api.dependencies import (
+    require_student,
+    submission_controller
+)
+
+from fastapi import Depends
+@router.post("/me/submissions", response_model=SubmissionResponse)
+def create_my_submission(
+    data: SubmissionCreate,
+    current_user=Depends(require_student)
+):
+
+    submission = submission_controller.create_submission(
+        current_user.student_id,
+        data.exercise_id,
+        data.file_path
+    )
+
+    return {
+        "submission_id": submission.submission_id,
+        "student_id": submission.student_id,
+        "exercise_id": submission.exercise.exercise_id,
+        "submission_date": submission.submission_date,
+        "file_path": submission.file_path,
+        "status": submission.status
+    }
+
+from api.dependencies import require_student
+from api.dependencies import grade_controller
+from fastapi import Depends
+
+
+@router.get("/me/grades")
+def get_my_grades(
+    current_user=Depends(require_student)
+):
+
+    grades = grade_controller.get_grades_by_student(
+        current_user.student_id
+    )
+
+    return [
+        {
+            "grade_id": grade.grade_id,
+            "score": grade.score,
+            "exercise_id": grade.exercise.exercise_id
+        }
+        for grade in grades
+    ]
+
+from api.dependencies import notification_controller
+from api.dependencies import require_student
+from fastapi import Depends
+
+
+@router.get("/me/notifications")
+def get_my_notifications(
+    current_user=Depends(require_student)
+):
+
+    notifications = notification_controller.get_student_notifications(
+        current_user.student_id
+    )
+
+    return [
+        {
+            "student_notification_id":
+                item.student_notification_id,
+
+            "notification_id":
+                item.notification.notification_id,
+
+            "title":
+                item.notification.title,
+
+            "message":
+                item.notification.message,
+
+            "is_read":
+                item.is_read,
+
+            "created_at":
+                item.notification.created_at
+        }
+        for item in notifications
+    ]
+
 @router.get("/", response_model=list[StudentResponse])
 def get_all_student():
     students = student_controller.get_all_students()
@@ -57,6 +202,8 @@ def get_all_student():
             "level": student.level
     }
     for student in students]
+
+
 
 from models.student import Student
 from api.dependencies import student_controller
