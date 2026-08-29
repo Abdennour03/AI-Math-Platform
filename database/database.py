@@ -1,8 +1,10 @@
 import sqlite3
 
+
 class Database:
 
     def __init__(self, db_name="eduinsight.db"):
+
         self.connection = sqlite3.connect(
             db_name,
             check_same_thread=False

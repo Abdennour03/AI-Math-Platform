@@ -124,8 +124,8 @@ class CourseRepo:
                 row[0],  # course_id
                 row[1],  # course_name
                 teacher,
-                row[3],  # semester
-                row[2]   # level
+                row[2],  # level
+                row[3]   # semester
             )
 
             courses.append(course)
@@ -314,5 +314,53 @@ class CourseRepo:
                     row[3]         # semester
                 )
             )
+
+        return courses
+
+    def get_courses_by_teacher(self, teacher_id):
+
+        self.db.cursor.execute("""
+            SELECT
+                courses.course_id,
+                courses.course_name,
+                courses.teacher_id,
+                courses.semester,
+                courses.level,
+                teachers.teacher_id,
+                teachers.full_name,
+                teachers.email,
+                teachers.password,
+                teachers.phone_number
+            FROM courses
+            JOIN teachers
+                ON courses.teacher_id = teachers.teacher_id
+            WHERE courses.teacher_id = ?
+        """, (teacher_id,))
+
+        rows = self.db.cursor.fetchall()
+
+        courses = []
+
+        from models.teacher import Teacher
+
+        for row in rows:
+
+            teacher = Teacher(
+                row[5],
+                row[6],
+                row[7],
+                row[8],
+                row[9]
+            )
+
+            course = Course(
+                row[0],
+                row[1],
+                teacher,
+                row[4],
+                row[3]
+            )
+
+            courses.append(course)
 
         return courses

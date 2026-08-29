@@ -70,3 +70,9 @@ class CourseController:
     def get_courses_by_level(self, level):
         courses = self.course_repo.get_courses_by_level(level)
         return courses
+    def get_courses_by_teacher(self, teacher_id):
+
+        if not isinstance(teacher_id, int):
+            raise ValueError("Teacher ID must be an int")
+
+        return self.course_repo.get_courses_by_teacher(teacher_id)

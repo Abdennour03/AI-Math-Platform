@@ -1,7 +1,12 @@
 from fastapi import APIRouter
-from api.schemas.student_schema import (StudentResponse , StudentCreate)
+from api.schemas.student_schema import (
+    StudentResponse,
+    StudentCreate,
+    StudentUpdate
+)
 from api.dependencies import student_controller
 from fastapi import APIRouter , HTTPException
+
 router = APIRouter(
     prefix="/students",
     tags = ["Students"]
@@ -190,6 +195,37 @@ def get_my_notifications(
         }
         for item in notifications
     ]
+
+
+@router.put("/me", response_model=StudentResponse)
+def update_my_profile(
+    data: StudentUpdate,
+    current_user=Depends(require_student)
+):
+    updates = data.model_dump(exclude_none=True)
+
+    if not updates:
+        raise HTTPException(
+            status_code=400,
+            detail="No data to update"
+        )
+
+    student_controller.update_student(
+        current_user.student_id,
+        **updates
+    )
+
+    updated_student = student_controller.get_student(
+        current_user.student_id
+    )
+
+    return {
+        "student_id": updated_student.student_id,
+        "full_name": updated_student.full_name,
+        "email": updated_student.email,
+        "phone_number": updated_student.phone_number,
+        "level": updated_student.level
+    }
 
 @router.get("/", response_model=list[StudentResponse])
 def get_all_student():

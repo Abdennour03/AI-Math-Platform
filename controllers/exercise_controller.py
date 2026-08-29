@@ -6,19 +6,31 @@ class ExerciseController:
         self.exercise_repo = exercise_repo
         self.course_repo = course_repo
 
-    def create_exercise(self, exercise_name, course_id):
+    def create_exercise(self, exercise_name, course_id, teacher_id):
 
-        ExerciseValidator.validation_exercise_name(exercise_name)
+        ExerciseValidator.validation_exercise_name(
+            exercise_name
+        )
 
-        #find the course id of the exrcise we need 
         course = self.course_repo.get_course(course_id)
+
         if course is None:
-            raise ValueError("No course found.")
-        exercise = Exercise(None, exercise_name, course)
+            raise ValueError("Course not found.")
+
+        if course.teacher.teacher_id != teacher_id:
+            raise ValueError(
+                "You can only create exercises for your own courses."
+            )
+
+        exercise = Exercise(
+            None,
+            exercise_name,
+            course
+        )
 
         self.exercise_repo.add_exercise(exercise)
-        return "Exercise created successfully."
 
+        return "Exercise created successfully."
     def get_exercise(self, exercise_id):
 
         if not isinstance(exercise_id, int):
@@ -76,3 +88,11 @@ class ExerciseController:
         ExerciseValidator.validation_level(level)
 
         return self.exercise_repo.get_exercises_by_level(level)
+    def get_exercises_by_teacher(self, teacher_id):
+
+        if not isinstance(teacher_id, int):
+            raise ValueError("Teacher ID must be an int.")
+
+        return self.exercise_repo.get_exercises_by_teacher(
+            teacher_id
+        )

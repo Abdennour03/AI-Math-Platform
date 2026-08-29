@@ -15,8 +15,8 @@ class ExerciseRepo:
                 course_id INTEGER NOT NULL,
                 FOREIGN KEY (course_id)
                     REFERENCES courses(course_id)
-)
-        """)
+        )
+""")
 
         self.db.connection.commit()
 
@@ -25,18 +25,16 @@ class ExerciseRepo:
 
         self.db.cursor.execute("""
             INSERT INTO exercises
-            (exercise_name, course_id, level)
-            VALUES (?, ?, ?)
+            (exercise_name, course_id)
+            VALUES (?, ?)
         """, (
             exercise.exercise_name,
-            exercise.course.course_id,
-            exercise.level
+            exercise.course.course_id
         ))
 
         self.db.connection.commit()
 
         exercise.exercise_id = self.db.cursor.lastrowid
-
 
     def get_exercise(self, exercise_id):
 
@@ -44,8 +42,7 @@ class ExerciseRepo:
             SELECT
                 exercise_id,
                 exercise_name,
-                course_id,
-                level
+                course_id
             FROM exercises
             WHERE exercise_id = ?
         """, (exercise_id,))
@@ -99,17 +96,14 @@ class ExerciseRepo:
         return Exercise(
             row[0],
             row[1],
-            course,
+            course
         )
-
-
     def get_all_exercises(self):
 
         self.db.cursor.execute("""
             SELECT
                 exercises.exercise_id,
                 exercises.exercise_name,
-                exercises.level,
                 courses.course_id,
                 courses.course_name,
                 courses.teacher_id,
@@ -136,32 +130,30 @@ class ExerciseRepo:
         for row in rows:
 
             teacher = Teacher(
+                row[7],
                 row[8],
                 row[9],
                 row[10],
-                row[11],
-                row[12]
+                row[11]
             )
 
             course = Course(
+                row[2],
                 row[3],
-                row[4],
                 teacher,
-                row[6],
-                row[7]
+                row[5],
+                row[6]
             )
 
             exercise = Exercise(
                 row[0],
                 row[1],
-                course,
+                course
             )
 
             exercises.append(exercise)
 
         return exercises
-
-
     def update_exercise(self, exercise_id, **kwargs):
 
         if "exercise_name" in kwargs:
@@ -186,19 +178,6 @@ class ExerciseRepo:
                 kwargs["course"].course_id,
                 exercise_id
             ))
-
-
-        if "level" in kwargs:
-
-            self.db.cursor.execute("""
-                UPDATE exercises
-                SET level = ?
-                WHERE exercise_id = ?
-            """, (
-                kwargs["level"],
-                exercise_id
-            ))
-
 
         self.db.connection.commit()
 
@@ -228,7 +207,6 @@ class ExerciseRepo:
             SELECT
                 exercises.exercise_id,
                 exercises.exercise_name,
-                exercises.level,
                 courses.course_id,
                 courses.course_name,
                 courses.teacher_id,
@@ -302,7 +280,6 @@ class ExerciseRepo:
             SELECT
                 exercises.exercise_id,
                 exercises.exercise_name,
-                exercises.level,
                 courses.course_id,
                 courses.course_name,
                 courses.teacher_id,
@@ -321,7 +298,7 @@ class ExerciseRepo:
             JOIN teachers
                 ON courses.teacher_id = teachers.teacher_id
 
-            WHERE UPPER(TRIM(exercises.level)) = ?
+            WHERE UPPER(TRIM(courses.level)) = ?
         """, (level,))
 
         rows = self.db.cursor.fetchall()
@@ -331,25 +308,84 @@ class ExerciseRepo:
         for row in rows:
 
             teacher = Teacher(
+                row[7],
                 row[8],
                 row[9],
                 row[10],
-                row[11],
-                row[12]
+                row[11]
             )
 
             course = Course(
+                row[2],
                 row[3],
-                row[4],
                 teacher,
-                row[6],
-                row[7]
+                row[5],
+                row[6]
             )
 
             exercise = Exercise(
                 row[0],
                 row[1],
-                course,
+                course
+            )
+
+            exercises.append(exercise)
+
+        return exercises
+
+    def get_exercises_by_teacher(self, teacher_id):
+
+        self.db.cursor.execute("""
+            SELECT
+                exercises.exercise_id,
+                exercises.exercise_name,
+                courses.course_id,
+                courses.course_name,
+                courses.teacher_id,
+                courses.semester,
+                courses.level,
+                teachers.teacher_id,
+                teachers.full_name,
+                teachers.email,
+                teachers.password,
+                teachers.phone_number
+            FROM exercises
+
+            JOIN courses
+                ON exercises.course_id = courses.course_id
+
+            JOIN teachers
+                ON courses.teacher_id = teachers.teacher_id
+
+            WHERE courses.teacher_id = ?
+        """, (teacher_id,))
+
+        rows = self.db.cursor.fetchall()
+
+        exercises = []
+
+        for row in rows:
+
+            teacher = Teacher(
+                row[7],
+                row[8],
+                row[9],
+                row[10],
+                row[11]
+            )
+
+            course = Course(
+                row[2],
+                row[3],
+                teacher,
+                row[5],
+                row[6]
+            )
+
+            exercise = Exercise(
+                row[0],
+                row[1],
+                course
             )
 
             exercises.append(exercise)

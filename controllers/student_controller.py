@@ -40,16 +40,16 @@ class StudentController:
             StudentValidator.validate_name(kwargs["full_name"])
             
         if "email" in kwargs:
-            StudentValidator.validate_name(kwargs["email"])
+            StudentValidator.validate_email(kwargs["email"])
 
         if "password" in kwargs:
-            StudentValidator.validate_name(kwargs["password"])
+            StudentValidator.validate_password(kwargs["password"])
             kwargs["password"] = hash_password(kwargs["password"])
 
         if "phone_number" in kwargs:
-            StudentValidator.validate_name(kwargs["phone_number"])
+            StudentValidator.validate_phone_number(kwargs["phone_number"])
         if "level" in kwargs:
-            StudentValidator.validate_name(kwargs["level"])
+            StudentValidator.validate_level(kwargs["level"])
 
         self.student_repo.update_student(student_id, **kwargs)
         return "Student updated successfully"
