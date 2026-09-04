@@ -11,6 +11,11 @@ class GradeUpdate(BaseModel):
     score: float | None = None
 
 
+class GradeBulkUpdate(BaseModel):
+    grade_id: int
+    score: float
+
+
 class GradeResponse(BaseModel):
     grade_id: int
     score: float

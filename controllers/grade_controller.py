@@ -40,6 +40,16 @@ class GradeController:
         if exercise is None:
             raise ValueError("Exercise not found.")
 
+        existing_grade = self.grade_repo.get_grade_by_student_and_exercise(
+            student_id,
+            exercise_id
+        )
+
+        if existing_grade is not None:
+            raise ValueError(
+                "This student already has a grade for this exercise."
+            )
+
         grade = Grade(
             None,
             score,

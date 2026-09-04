@@ -17,6 +17,11 @@ class NotificationCreate(BaseModel):
     student_id: int
 
 
+class TeacherNotificationCreate(BaseModel):
+    title: str
+    message: str
+
+
 class NotificationUpdate(BaseModel):
     title: str | None = None
     message: str | None = None

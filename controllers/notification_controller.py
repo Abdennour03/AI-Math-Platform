@@ -60,6 +60,20 @@ class NotificationController:
         self.student_notification_repo.add_student_notification(student_notification)
         return "Notification sent to student."
 
+    def send_notification_to_students(self, teacher_id, title, message):
+        notification = self.create_notification(title, message, teacher_id)
+        return self.send_to_all_students(notification)
+
+    def send_notification_to_student(
+        self,
+        teacher_id,
+        student_id,
+        title,
+        message
+    ):
+        notification = self.create_notification(title, message, teacher_id)
+        return self.send_to_student(notification, student_id)
+
 
     def get_notification(self, notification_id):
 

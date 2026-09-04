@@ -152,10 +152,8 @@ def create_my_exercise(
 
     except ValueError as error:
 
-        raise HTTPException(
-            status_code=400,
-            detail=str(error)
-        )   
+        status_code = 409 if "already has a grade" in str(error) else 400
+        raise HTTPException(status_code=status_code, detail=str(error))
 
 @router.get("/me/students")
 def get_my_students(
@@ -191,7 +189,11 @@ from api.dependencies import grade_controller
 # MY GRADES
 # =========================================================
 
-from api.schemas.grade_schema import GradeCreate, GradeUpdate
+from api.schemas.grade_schema import (
+    GradeBulkUpdate,
+    GradeCreate,
+    GradeUpdate
+)
 from api.dependencies import grade_controller
 
 
@@ -217,41 +219,66 @@ def get_my_grades(
 
 @router.post("/me/grades")
 def add_grade_to_student(
-    data: GradeCreate,
+    data: GradeCreate | list[GradeCreate],
     current_user=Depends(require_teacher)
 ):
 
-    exercise = exercise_controller.get_exercise(
-        data.exercise_id
-    )
-
-    if exercise is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Exercise not found"
-        )
-
-    # Teacher can only grade his own exercise
-    if exercise.course.teacher.teacher_id != current_user.teacher_id:
-        raise HTTPException(
-            status_code=403,
-            detail="You can only grade your own exercises"
-        )
-
     try:
+        grade_items = data if isinstance(data, list) else [data]
 
-        result = grade_controller.create_grade(
-            data.score,
-            data.student_id,
-            data.exercise_id
-        )
+        for grade_data in grade_items:
+            exercise = exercise_controller.get_exercise(
+                grade_data.exercise_id
+            )
+
+            if exercise is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Exercise not found"
+                )
+
+            # Teacher can only grade his own exercise
+            if exercise.course.teacher.teacher_id != current_user.teacher_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You can only grade your own exercises"
+                )
+
+            grade_controller.create_grade(
+                grade_data.score,
+                grade_data.student_id,
+                grade_data.exercise_id
+            )
 
         return {
-            "message": result
+            "message": f"{len(grade_items)} grade(s) created successfully."
         }
 
     except ValueError as error:
 
+        status_code = 409 if "already has a grade" in str(error) else 400
+        raise HTTPException(status_code=status_code, detail=str(error))
+
+
+@router.put("/me/grades")
+def update_my_grades(
+    data: list[GradeBulkUpdate],
+    current_user=Depends(require_teacher)
+):
+
+    try:
+        for grade_data in data:
+            grade_controller.update_grade_by_teacher(
+                grade_data.grade_id,
+                current_user.teacher_id,
+                grade_data.score
+            )
+
+        return {
+            "message": f"{len(data)} grade(s) updated successfully."
+        }
+
+    except ValueError as error:
         raise HTTPException(
             status_code=400,
             detail=str(error)
@@ -288,13 +315,13 @@ def update_my_grade(
 # NOTIFICATIONS
 # =========================================================
 
-from api.schemas.notification_schema import NotificationCreate
+from api.schemas.notification_schema import TeacherNotificationCreate
 from api.dependencies import notification_controller
 
 
 @router.post("/me/notifications")
 def send_notification_to_students(
-    data: NotificationCreate,
+    data: TeacherNotificationCreate,
     current_user=Depends(require_teacher)
 ):
 
@@ -320,7 +347,7 @@ def send_notification_to_students(
 @router.post("/me/notifications/{student_id}")
 def send_notification_to_student(
     student_id: int,
-    data: NotificationCreate,
+    data: TeacherNotificationCreate,
     current_user=Depends(require_teacher)
 ):
 
