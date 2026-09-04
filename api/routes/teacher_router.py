@@ -1,24 +1,17 @@
 from fastapi import APIRouter, HTTPException, Depends
 
-from api.schemas.teacher_schema import (
-    TeacherResponse,
-    TeacherCreate,
-    TeacherUpdate
-)
-
-from api.dependencies import teacher_controller
-
-from api.schemas.teacher_schema import (
-    TeacherResponse,
-    TeacherCreate,
-    TeacherUpdate
-)
-
 from api.dependencies import (
     teacher_controller,
     require_teacher,
     course_controller,
-    exercise_controller
+    exercise_controller,
+    student_controller
+)
+
+from api.schemas.teacher_schema import (
+    TeacherResponse,
+    TeacherCreate,
+    TeacherUpdate
 )
 router = APIRouter(
     prefix="/teachers",
@@ -162,7 +155,195 @@ def create_my_exercise(
         raise HTTPException(
             status_code=400,
             detail=str(error)
-        )    
+        )   
+
+@router.get("/me/students")
+def get_my_students(
+    current_user=Depends(require_teacher)
+):
+    courses = course_controller.get_courses_by_teacher(current_user.teacher_id)
+
+    levels = {course.level for course in courses}
+
+    students = []
+    for level in levels:
+        students.extend(student_controller.get_students_by_level(level))
+
+    unique_students = {}
+    for student in students:
+        unique_students[student.student_id] = student
+
+    return [
+        {
+            "student_id": student.student_id,
+            "full_name": student.full_name,
+            "email": student.email,
+            "phone_number": student.phone_number,
+            "level": student.level
+        }
+        for student in unique_students.values()
+    ]
+
+from api.schemas.grade_schema import GradeCreate
+from api.dependencies import grade_controller
+
+# =========================================================
+# MY GRADES
+# =========================================================
+
+from api.schemas.grade_schema import GradeCreate, GradeUpdate
+from api.dependencies import grade_controller
+
+
+@router.get("/me/grades")
+def get_my_grades(
+    current_user=Depends(require_teacher)
+):
+
+    grades = grade_controller.get_grades_by_teacher(
+        current_user.teacher_id
+    )
+
+    return [
+        {
+            "grade_id": grade.grade_id,
+            "score": grade.score,
+            "student_id": grade.student.student_id,
+            "exercise_id": grade.exercise.exercise_id
+        }
+        for grade in grades
+    ]
+
+
+@router.post("/me/grades")
+def add_grade_to_student(
+    data: GradeCreate,
+    current_user=Depends(require_teacher)
+):
+
+    exercise = exercise_controller.get_exercise(
+        data.exercise_id
+    )
+
+    if exercise is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Exercise not found"
+        )
+
+    # Teacher can only grade his own exercise
+    if exercise.course.teacher.teacher_id != current_user.teacher_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only grade your own exercises"
+        )
+
+    try:
+
+        result = grade_controller.create_grade(
+            data.score,
+            data.student_id,
+            data.exercise_id
+        )
+
+        return {
+            "message": result
+        }
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+
+@router.put("/me/grades/{grade_id}")
+def update_my_grade(
+    grade_id: int,
+    data: GradeUpdate,
+    current_user=Depends(require_teacher)
+):
+
+    try:
+
+        result = grade_controller.update_grade_by_teacher(
+            grade_id,
+            current_user.teacher_id,
+            data.score
+        )
+
+        return {
+            "message": result
+        }
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+    
+# =========================================================
+# NOTIFICATIONS
+# =========================================================
+
+from api.schemas.notification_schema import NotificationCreate
+from api.dependencies import notification_controller
+
+
+@router.post("/me/notifications")
+def send_notification_to_students(
+    data: NotificationCreate,
+    current_user=Depends(require_teacher)
+):
+
+    try:
+
+        result = notification_controller.send_notification_to_students(
+            current_user.teacher_id,
+            data.title,
+            data.message
+        )
+
+        return {
+            "message": result
+        }
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+@router.post("/me/notifications/{student_id}")
+def send_notification_to_student(
+    student_id: int,
+    data: NotificationCreate,
+    current_user=Depends(require_teacher)
+):
+
+    try:
+
+        result = notification_controller.send_notification_to_student(
+            current_user.teacher_id,
+            student_id,
+            data.title,
+            data.message
+        )
+
+        return {
+            "message": result
+        }
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+        
 @router.get("/", response_model=list[TeacherResponse])
 def get_all_teachers():
 

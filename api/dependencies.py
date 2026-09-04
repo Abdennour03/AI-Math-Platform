@@ -23,6 +23,10 @@ from repositories.grade_repository import GradeRepo
 from controllers.grade_controller import GradeController
 
 from controllers.auth_controller import AuthController
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from utils.security import decode_access_token
+
 db = Database()
 
 # Student
@@ -74,31 +78,14 @@ grade_repo = GradeRepo(db, student_repo, exercise_repo)
 grade_controller = GradeController(
     grade_repo,
     student_repo,
-    exercise_repo
+    exercise_repo,
+    course_repo
 )
 
 auth_controller= AuthController(
     student_repo,
     teacher_repo
 )
-
-"""
-create :
-get_current_user()
-require_student()
-require_teacher()
-
-"""
-
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
-from utils.security import decode_access_token
-security = HTTPBearer()
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
-from utils.security import decode_access_token
 
 security = HTTPBearer()
 
@@ -170,27 +157,6 @@ def require_student(
 def require_teacher(
     current_user=Depends(get_current_user)
 ):
-    if not hasattr(current_user, "teacher_id"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Teacher access required"
-        )
-
-    return current_user
-
-def require_student(current_user=Depends(get_current_user)):
-
-    if not hasattr(current_user, "student_id"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Student access required"
-        )
-
-    return current_user
-
-
-def require_teacher(current_user=Depends(get_current_user)):
-
     if not hasattr(current_user, "teacher_id"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

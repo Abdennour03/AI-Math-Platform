@@ -256,3 +256,4 @@ class GradeRepo:
         result = self.db.cursor.fetchone()
 
         return result[0]
+    

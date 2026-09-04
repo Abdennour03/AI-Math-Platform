@@ -65,6 +65,31 @@ class StudentRepo:
             )
 
         return students
+
+    def get_students_by_level(self, level):
+        self.db.cursor.execute("""
+            SELECT student_id, full_name, email,
+                   password, phone_number, level
+            FROM students
+            WHERE UPPER(TRIM(level)) = ?
+        """, (level.strip().upper(),))
+
+        rows = self.db.cursor.fetchall()
+        students = []
+
+        for row in rows:
+            students.append(
+                Student(
+                    row[0],
+                    row[1],
+                    row[2],
+                    row[3],
+                    row[4],
+                    row[5]
+                )
+            )
+
+        return students
         
     def update_student(self, student_id, **kwargs):
         student = self.get_student(student_id)
@@ -187,3 +212,26 @@ WHERE student_id = ?""", (student_id,))
             row[4],
             row[5]
         )
+    def get_students_by_level(self, level):
+        self.db.cursor.execute("""
+            SELECT student_id, full_name, email, password, phone_number, level
+            FROM students
+            WHERE UPPER(TRIM(level)) = ?
+        """, (level.strip().upper(),))
+
+        rows = self.db.cursor.fetchall()
+        students = []
+
+        for row in rows:
+            students.append(
+                Student(
+                    row[0],
+                    row[1],
+                    row[2],
+                    row[3],
+                    row[4],
+                    row[5]
+                )
+            )
+
+        return students

@@ -113,3 +113,18 @@ class SubmissionController:
             raise ValueError("Student not found.")
 
         return self.submission_repo.get_submissions_by_student(student_id)
+
+
+    def get_submissions_by_teacher(self, teacher_id):
+
+        if not isinstance(teacher_id, int):
+            raise ValueError("Teacher ID must be an integer.")
+
+        submissions = self.submission_repo.get_submissions_by_teacher(
+            teacher_id
+        )
+
+        if not submissions:
+            raise ValueError("No submissions found.")
+
+        return submissions

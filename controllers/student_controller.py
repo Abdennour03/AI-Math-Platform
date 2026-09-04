@@ -31,6 +31,11 @@ class StudentController:
         if not students:
             raise ValueError("No students found.")
         return students
+
+    def get_students_by_level(self, level):
+        if not isinstance(level, str):
+            raise ValueError("Level must be a string.")
+        return self.student_repo.get_students_by_level(level)
     
     def update_student(self, student_id, **kwargs):
         student = self.student_repo.get_student(student_id)
@@ -72,3 +77,6 @@ class StudentController:
 
     def count_students(self):
         return self.student_repo.count_students()
+    
+    def get_students_by_level(self, level):
+        return self.student_repo.get_students_by_level(level)

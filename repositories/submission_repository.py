@@ -338,3 +338,46 @@ class SubmissionRepo:
             submissions.append(submission)
 
         return submissions
+
+    def get_submissions_by_teacher(self, teacher_id):
+
+        self.db.cursor.execute("""
+            SELECT
+                submissions.submission_id,
+                submissions.student_id,
+                submissions.exercise_id,
+                submissions.submission_date,
+                submissions.file_path,
+                submissions.status
+            FROM submissions
+            JOIN exercises
+                ON submissions.exercise_id = exercises.exercise_id
+            JOIN courses
+                ON exercises.course_id = courses.course_id
+            WHERE courses.teacher_id = ?
+        """, (teacher_id,))
+
+        rows = self.db.cursor.fetchall()
+
+        submissions = []
+
+        for row in rows:
+
+            student = self.student_repo.get_student(row[1])
+            exercise = self.exercise_repo.get_exercise(row[2])
+
+            if student is None or exercise is None:
+                continue
+
+            submission = Submission(
+                row[0],
+                student,
+                exercise,
+                row[3],
+                row[4],
+                row[5]
+            )
+
+            submissions.append(submission)
+
+        return submissions
