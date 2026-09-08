@@ -7,14 +7,15 @@ class StudentRepo:
     def add_student(self, student):
         self.db.cursor.execute("""
     INSERT INTO students
-    (full_name, email, password, phone_number, level)
-    VALUES (?, ?, ?, ?, ?)
+    (full_name, email, password, phone_number, level, class_id)
+    VALUES (?, ?, ?, ?, ?, ?)
         """,
         (student.full_name,
          student.email,
          student.password,
          student.phone_number,
-         student.level
+         student.level,
+         student.class_id
          ))
         self.db.connection.commit()
         student.student_id = self.db.cursor.lastrowid
@@ -24,7 +25,7 @@ class StudentRepo:
     def get_student(self, student_id):
         self.db.cursor.execute("""
         SELECT student_id, full_name, email,
-               password, phone_number, level
+               password, phone_number, level, class_id
         FROM students
         WHERE student_id = ?
     """, (student_id,))
@@ -39,12 +40,13 @@ class StudentRepo:
             row[2],
             row[3],
             row[4],
-            row[5]
+            row[5],
+            row[6]
         )
     def get_all_student(self):
         self.db.cursor.execute("""
         SELECT student_id, full_name, email,
-               password, phone_number, level
+               password, phone_number, level, class_id
         FROM students
     """)
 
@@ -60,7 +62,8 @@ class StudentRepo:
                     row[2],
                     row[3],
                     row[4],
-                    row[5]
+                    row[5],
+                    row[6]
                 )
             )
 
@@ -69,7 +72,7 @@ class StudentRepo:
     def get_students_by_level(self, level):
         self.db.cursor.execute("""
             SELECT student_id, full_name, email,
-                   password, phone_number, level
+                   password, phone_number, level, class_id
             FROM students
             WHERE UPPER(TRIM(level)) = ?
         """, (level.strip().upper(),))
@@ -85,7 +88,8 @@ class StudentRepo:
                     row[2],
                     row[3],
                     row[4],
-                    row[5]
+                    row[5],
+                    row[6]
                 )
             )
 
@@ -134,6 +138,11 @@ class StudentRepo:
             WHERE student_id = ?
             """, (kwargs["level"], student_id))
 
+        if "class_id" in kwargs:
+            self.db.cursor.execute("""
+        UPDATE students SET class_id = ? WHERE student_id = ?
+            """, (kwargs["class_id"], student_id))
+
         self.db.connection.commit() 
                 
 
@@ -152,7 +161,7 @@ WHERE student_id = ?""", (student_id,))
 
         self.db.cursor.execute("""
             SELECT student_id, full_name, email,
-                password, phone_number, level
+                password, phone_number, level, class_id
             FROM students
             WHERE full_name LIKE ?
         """, (f"%{name}%",))
@@ -168,7 +177,8 @@ WHERE student_id = ?""", (student_id,))
                     row[2],
                     row[3],
                     row[4],
-                    row[5]
+                    row[5],
+                    row[6]
                 )
             )
 
@@ -194,7 +204,8 @@ WHERE student_id = ?""", (student_id,))
                 email,
                 password,
                 phone_number,
-                level
+                level,
+                class_id
             FROM students
             WHERE email = ?
         """, (email,))
@@ -210,11 +221,12 @@ WHERE student_id = ?""", (student_id,))
             row[2],
             row[3],
             row[4],
-            row[5]
+            row[5],
+            row[6]
         )
     def get_students_by_level(self, level):
         self.db.cursor.execute("""
-            SELECT student_id, full_name, email, password, phone_number, level
+            SELECT student_id, full_name, email, password, phone_number, level, class_id
             FROM students
             WHERE UPPER(TRIM(level)) = ?
         """, (level.strip().upper(),))
@@ -230,8 +242,49 @@ WHERE student_id = ?""", (student_id,))
                     row[2],
                     row[3],
                     row[4],
-                    row[5]
+                    row[5],
+                    row[6]
                 )
             )
 
         return students
+
+    def get_academic_report(self, student_id):
+        self.db.cursor.execute("""
+            SELECT s.student_id, s.full_name, s.email, s.phone_number, s.level,
+                   s.class_id, c.name, c.academic_year,
+                   e.exercise_id, e.exercise_name, e.max_score, g.score
+            FROM students s
+            LEFT JOIN classes c ON c.class_id = s.class_id
+            LEFT JOIN exercises e ON EXISTS (
+                SELECT 1 FROM courses course_for_exercise
+                WHERE course_for_exercise.course_id = e.course_id
+                  AND UPPER(TRIM(course_for_exercise.level)) = UPPER(TRIM(s.level))
+            )
+            LEFT JOIN grades g
+              ON g.student_id = s.student_id AND g.exercise_id = e.exercise_id
+            WHERE s.student_id = ?
+            ORDER BY e.exercise_id
+        """, (student_id,))
+        rows = self.db.cursor.fetchall()
+        if not rows:
+            return None
+        first = rows[0]
+        return {
+            "student_id": first[0],
+            "name": first[1],
+            "email": first[2],
+            "class_info": (
+                {"class_id": first[5], "name": first[6], "academic_year": first[7]}
+                if first[5] is not None else None
+            ),
+            "exercises_and_exams": [
+                {
+                    "exercise_id": row[8],
+                    "exercise_name": row[9],
+                    "max_score": row[10],
+                    "score": row[11],
+                }
+                for row in rows if row[8] is not None
+            ],
+        }

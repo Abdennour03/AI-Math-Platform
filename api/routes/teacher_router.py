@@ -18,17 +18,29 @@ router = APIRouter(
     tags=["Teachers"]
 )
 
+
+def teacher_response(teacher):
+    return {
+        "teacher_id": teacher.teacher_id,
+        "full_name": teacher.full_name,
+        "email": teacher.email,
+        "phone_number": teacher.phone_number,
+        "classes": [
+            {
+                "class_id": class_group.class_id,
+                "name": class_group.name,
+                "academic_year": class_group.academic_year,
+            }
+            for class_group in teacher.classes
+        ],
+    }
+
 @router.get("/me", response_model=TeacherResponse)
 def get_my_profile(
     current_user=Depends(require_teacher)
 ):
 
-    return {
-        "teacher_id": current_user.teacher_id,
-        "full_name": current_user.full_name,
-        "email": current_user.email,
-        "phone_number": current_user.phone_number
-    }
+    return teacher_response(current_user)
 
 
 @router.put("/me")
@@ -97,6 +109,7 @@ def get_my_exercises(
             "exercise_name": exercise.exercise_name,
             "course": {
                 "course_id": exercise.course.course_id,
+                "max_score": exercise.max_score,
                 "course_name": exercise.course.course_name,
                 "semester": exercise.course.semester
             }
@@ -143,7 +156,8 @@ def create_my_exercise(
         result = exercise_controller.create_exercise(
             data.exercise_name,
             data.course_id,
-            current_user.teacher_id
+            current_user.teacher_id,
+            data.max_score
         )
 
         return {
@@ -227,27 +241,11 @@ def add_grade_to_student(
         grade_items = data if isinstance(data, list) else [data]
 
         for grade_data in grade_items:
-            exercise = exercise_controller.get_exercise(
-                grade_data.exercise_id
-            )
-
-            if exercise is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Exercise not found"
-                )
-
-            # Teacher can only grade his own exercise
-            if exercise.course.teacher.teacher_id != current_user.teacher_id:
-                raise HTTPException(
-                    status_code=403,
-                    detail="You can only grade your own exercises"
-                )
-
             grade_controller.create_grade(
                 grade_data.score,
                 grade_data.student_id,
-                grade_data.exercise_id
+                grade_data.exercise_id,
+                current_user.teacher_id
             )
 
         return {
@@ -377,12 +375,7 @@ def get_all_teachers():
     teachers = teacher_controller.get_all_teachers()
 
     return [
-        {
-            "teacher_id": teacher.teacher_id,
-            "full_name": teacher.full_name,
-            "email": teacher.email,
-            "phone_number": teacher.phone_number
-        }
+        teacher_response(teacher)
         for teacher in teachers
     ]
 
@@ -414,12 +407,7 @@ def search_teachers(full_name: str):
     teachers = teacher_controller.search_teacher(full_name)
 
     return [
-        {
-            "teacher_id": teacher.teacher_id,
-            "full_name": teacher.full_name,
-            "email": teacher.email,
-            "phone_number": teacher.phone_number
-        }
+        teacher_response(teacher)
         for teacher in teachers
     ]
 

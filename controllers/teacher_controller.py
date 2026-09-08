@@ -1,81 +1,27 @@
-from models.teacher import Teacher
-from utils.teacher_validation import TeacherValidator
-from utils.security import hash_password
-
 class TeacherController:
-    def __init__(self, teacher_repo):
-        self.teacher_repo = teacher_repo
-        
+    def __init__(self, teacher_service):
+        self.teacher_service = teacher_service
         
     def create_teacher(self, full_name, email, password, phone_number):
-        validation = TeacherValidator()
-        validation.validate_name(full_name)
-        validation.validate_email(email)
-        validation.validate_password(password)
-        validation.validate_phone_number(phone_number)
-        hashed_password = hash_password(password)
-        teacher = Teacher(None, full_name, email, hashed_password, phone_number)
-        self.teacher_repo.add_teacher(teacher)
-        return teacher
-        
+        return self.teacher_service.create_teacher(full_name, email, password, phone_number)
 
     def get_teacher(self, teacher_id):
-        if not isinstance(teacher_id, int):
-            raise ValueError("Teacher Id must be an integer.")
-        teacher = self.teacher_repo.get_teacher(teacher_id)
-        if teacher is None:
-            raise ValueError("Teacher not found.")
-        return teacher
-
+        return self.teacher_service.get_teacher(teacher_id)
 
     def get_all_teachers(self):
-            teachers = self.teacher_repo.get_all_teachers()
-            if not teachers:
-                raise ValueError("No teachers found.")
-            return teachers
+        return self.teacher_service.get_all_teachers()
         
     def update_teacher(self, teacher_id, **kwargs):
-
-        teacher = self.teacher_repo.get_teacher(teacher_id)
-
-        if teacher is None:
-            raise ValueError("Teacher not found.")
-
-        if "full_name" in kwargs:
-            TeacherValidator.validate_name(kwargs["full_name"])
-
-        if "email" in kwargs:
-            TeacherValidator.validate_email(kwargs["email"])
-
-        if "password" in kwargs:
-            TeacherValidator.validate_password(kwargs["password"])
-            kwargs["password"] = hash_password(kwargs["password"])
-
-        if "phone_number" in kwargs:
-            TeacherValidator.validate_phone_number(kwargs["phone_number"])
-
-        self.teacher_repo.update_teacher(
-            teacher_id,
-            **kwargs
-        )
-
-        return "Teacher updated successfully"
+        return self.teacher_service.update_teacher(teacher_id, **kwargs)
     
     def delete_teacher(self, teacher_id):
-            if not isinstance(teacher_id, int):
-                raise ValueError("teacher ID must be an integer")
-            teacher = self.teacher_repo.get_teacher(teacher_id)
-            if teacher is None:
-                raise ValueError("teacher is not found.")
-            self.teacher_repo.delete_teacher(teacher_id)
-            return "teacher deleted successfully."
+        return self.teacher_service.delete_teacher(teacher_id)
         
     def search_teacher(self, full_name):
-            TeacherValidator.validate_name(full_name)
-            teachers = self.teacher_repo.search_teacher(full_name)
-            if not teachers:
-                raise ValueError("No teachers found.")
-            return teachers
+        return self.teacher_service.search_teacher(full_name)
     
     def count_teachers(self):
-            return self.teacher_repo.count_teacher()
+        return self.teacher_service.count_teachers()
+
+    def assign_teacher_to_classes(self, teacher_id, class_ids):
+        return self.teacher_service.assign_to_classes(teacher_id, class_ids)

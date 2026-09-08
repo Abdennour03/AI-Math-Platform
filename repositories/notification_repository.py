@@ -7,21 +7,6 @@ class NotificationRepo:
     def __init__(self, db):
         self.db = db
 
-        self.db.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS notifications (
-                notification_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                message TEXT NOT NULL,
-                sender_id INTEGER NOT NULL,
-                created_at TEXT NOT NULL,
-
-                FOREIGN KEY (sender_id)
-                    REFERENCES teachers(teacher_id)
-            )
-        """)
-
-        self.db.connection.commit()
-
 
     def add_notification(self, notification):
 

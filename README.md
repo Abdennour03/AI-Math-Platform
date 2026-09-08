@@ -1,248 +1,32 @@
-# EDUINSIGHT AI
+# EduInsight AI
 
-EDUINSIGHT AI is an educational management platform designed to simplify course management, assignment submission, grading, and student performance analysis. The project follows a layered architecture to ensure maintainability, scalability, and clean code practices.
+EduInsight AI is a FastAPI backend for student, teacher, course, exercise, submission, grading, and notification workflows.
 
----
+## Run
 
-## Project Status
-
-Current Phase: Repository Layer Completed
-
-### Completed
-
-- Project structure
-- Domain models
-- Repository layer (CRUD operations)
-- Repository testing
-
-### In Progress
-
-- Controller layer
-
-### Upcoming
-
-- Views
-- Application logic
-- Authentication
-- Database integration
-- Analytics
-- Machine Learning features
-
----
-
-# Project Structure
-
-```text
-EDUINSIGHT_AI/
-│
-├── app.py
-├── README.md
-├── requirements.txt
-│
-├── config/
-├── controllers/
-├── models/
-├── repositories/
-├── services/
-├── interfaces/
-├── utils/
-├── views/
-├── data/
-└── test/
-```
-
----
-
-# Architecture
-
-```text
-                User
-                  │
-                  ▼
-            Controllers
-                  │
-                  ▼
-           Repositories
-                  │
-                  ▼
-               Models
-```
-
----
-
-# Models
-
-- Student
-- Teacher
-- Course
-- Exercise
-- Submission
-- Grade
-- Notification
-
----
-
-# Repositories
-
-Completed repositories:
-
-- StudentRepository
-- TeacherRepository
-- CourseRepository
-- ExerciseRepository
-- SubmissionRepository
-- GradeRepository
-- NotificationRepository
-
-Each repository provides:
-
-- Create
-- Read
-- Update
-- Delete
-- Search
-- Count
-
----
-
-# Development Roadmap
-
-## Phase 1 — Foundation
-
-- [x] Project structure
-- [x] Models
-- [x] Repositories
-
----
-
-## Phase 2 — Business Logic
-
-- [ ] StudentController
-- [ ] TeacherController
-- [ ] CourseController
-- [ ] ExerciseController
-- [ ] SubmissionController
-- [ ] GradeController
-- [ ] NotificationController
-
----
-
-## Phase 3 — User Interface
-
-- [ ] Main Menu
-- [ ] Student Interface
-- [ ] Teacher Interface
-- [ ] Dashboard
-- [ ] Navigation
-
----
-
-## Phase 4 — Data Persistence
-
-- [ ] SQLite Database
-- [ ] Data Access Layer
-- [ ] Data Validation
-
----
-
-## Phase 5 — Analytics
-
-- [ ] Student Performance Analytics
-- [ ] Reports
-- [ ] Charts
-- [ ] Statistics
-
----
-
-## Phase 6 — Artificial Intelligence
-
-- [ ] Student Performance Prediction
-- [ ] Recommendation System
-- [ ] Learning Analytics
-- [ ] AI Assistant
-
----
-
-# Testing
-
-Repository tests can be executed using:
+Install dependencies and start the API:
 
 ```bash
-python -m test.test_student_repository
-python -m test.test_teacher_repository
-python -m test.test_course_repository
-python -m test.test_exercise_repository
-python -m test.test_submission_repository
-python -m test.test_grade_repository
-python -m test.test_notification_repository
+python -m pip install -r requirements.txt
+uvicorn app:app --reload
 ```
 
----
+The interactive API is available at `http://127.0.0.1:8000/docs`.
 
-# Technologies
-
-Current
-
-- Python
-- Object-Oriented Programming (OOP)
-
-Planned
-
-- Rich
-- SQLite
-- Pandas
-- NumPy
-- Scikit-learn
-- Matplotlib
-- Plotly
-
----
-
-# Current Progress
+## Architecture
 
 ```text
-Project Structure
-        │
-        ▼
-Models
-        │
-        ▼
-Repositories
-        │
-        ▼
-Controllers
-        │
-        ▼
-Views
-        │
-        ▼
-Application
-        │
-        ▼
-Database
-        │
-        ▼
-Analytics
-        │
-        ▼
-Machine Learning
+API route -> Controller -> Service -> Repository -> Database -> SQLite
 ```
 
----
+Routes handle HTTP and Pydantic schemas. Controllers delegate to services. Services contain validation, authentication, authorization, relationship, and workflow rules. Repositories contain SQL persistence only. `database/database.py` owns the raw `sqlite3` connection and idempotent schema creation.
 
-# Design Principles
+The project uses raw SQLite, not an ORM. The existing `eduinsight.db` file is preserved.
 
-The project follows the following software engineering principles:
+## Tests
 
-- Object-Oriented Programming (OOP)
-- Layered Architecture
-- Separation of Concerns
-- Repository Pattern
-- Modular Design
-- Maintainable and Scalable Code
+```bash
+python -m pytest -q
+```
 
----
-
-# License
-
-This project is intended for educational purposes and personal learning.
+Focused tests cover database initialization, controller delegation, and grade creation, duplicate prevention, teacher ownership, and updates. See [ARCHITECTURE.md](ARCHITECTURE.md) for the complete refactor record.

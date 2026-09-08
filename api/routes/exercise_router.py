@@ -6,7 +6,8 @@ from api.schemas.exercise_schema import (
     ExerciseUpdate
 )
 
-from api.dependencies import exercise_controller
+from api.dependencies import exercise_controller, require_teacher
+from fastapi import Depends
 
 
 router = APIRouter(
@@ -25,6 +26,7 @@ def get_all_exercises():
             "exercise_id": exercise.exercise_id,
             "exercise_name": exercise.exercise_name,
             "course_id": exercise.course.course_id,
+            "max_score": exercise.max_score,
         }
         for exercise in exercises
     ]
@@ -40,6 +42,7 @@ def get_exercise(exercise_id: int):
             "exercise_id": exercise.exercise_id,
             "exercise_name": exercise.exercise_name,
             "course_id": exercise.course.course_id,
+            "max_score": exercise.max_score,
         }
 
     except ValueError as error:
@@ -51,13 +54,15 @@ def get_exercise(exercise_id: int):
 
 
 @router.post("/")
-def create_exercise(data: ExerciseCreate):
+def create_exercise(data: ExerciseCreate, current_user=Depends(require_teacher)):
 
     try:
 
         result = exercise_controller.create_exercise(
             data.exercise_name,
             data.course_id,
+            current_user.teacher_id,
+            data.max_score,
         )
 
         return {
@@ -75,7 +80,8 @@ def create_exercise(data: ExerciseCreate):
 @router.put("/{exercise_id}")
 def update_exercise(
     exercise_id: int,
-    data: ExerciseUpdate
+    data: ExerciseUpdate,
+    current_user=Depends(require_teacher)
 ):
 
     try:
@@ -84,6 +90,7 @@ def update_exercise(
 
         result = exercise_controller.update_exercise(
             exercise_id,
+            current_user.teacher_id,
             **updates
         )
 
@@ -100,12 +107,13 @@ def update_exercise(
 
 
 @router.delete("/{exercise_id}")
-def delete_exercise(exercise_id: int):
+def delete_exercise(exercise_id: int, current_user=Depends(require_teacher)):
 
     try:
 
         result = exercise_controller.delete_exercise(
-            exercise_id
+            exercise_id,
+            current_user.teacher_id
         )
 
         return {
@@ -132,6 +140,7 @@ def search_exercises(query: str):
                 "exercise_id": exercise.exercise_id,
                 "exercise_name": exercise.exercise_name,
                 "course_id": exercise.course.course_id,
+                "max_score": exercise.max_score,
             }
             for exercise in exercises
         ]

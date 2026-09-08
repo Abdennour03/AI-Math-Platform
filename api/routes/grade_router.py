@@ -6,7 +6,8 @@ from api.schemas.grade_schema import (
     GradeResponse
 )
 
-from api.dependencies import grade_controller
+from api.dependencies import grade_controller, require_teacher
+from fastapi import Depends
 
 
 router = APIRouter(
@@ -29,14 +30,15 @@ def grade_to_response(grade):
     "/",
     response_model=dict
 )
-def create_grade(data: GradeCreate):
+def create_grade(data: GradeCreate, current_user=Depends(require_teacher)):
 
     try:
 
         result = grade_controller.create_grade(
             data.score,
             data.student_id,
-            data.exercise_id
+            data.exercise_id,
+            current_user.teacher_id,
         )
 
         return {
@@ -154,7 +156,8 @@ def get_grade(grade_id: int):
 )
 def update_grade(
     grade_id: int,
-    data: GradeUpdate
+    data: GradeUpdate,
+    current_user=Depends(require_teacher)
 ):
 
     try:
@@ -163,9 +166,13 @@ def update_grade(
             exclude_none=True
         )
 
-        result = grade_controller.update_grade(
+        if "score" not in updates:
+            raise HTTPException(status_code=400, detail="Score is required")
+
+        result = grade_controller.update_grade_by_teacher(
             grade_id,
-            **updates
+            current_user.teacher_id,
+            updates["score"]
         )
 
         return {
@@ -183,12 +190,13 @@ def update_grade(
     "/{grade_id}",
     response_model=dict
 )
-def delete_grade(grade_id: int):
+def delete_grade(grade_id: int, current_user=Depends(require_teacher)):
 
     try:
 
-        result = grade_controller.delete_grade(
-            grade_id
+        result = grade_controller.delete_grade_by_teacher(
+            grade_id,
+            current_user.teacher_id
         )
 
         return {

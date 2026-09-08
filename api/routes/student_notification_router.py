@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
-from api.dependencies import student_notification_repo
+from api.dependencies import notification_controller, require_student
+from fastapi import Depends
 
 
 router = APIRouter(
@@ -13,11 +14,10 @@ router = APIRouter(
     "/student/{student_id}",
     response_model=list[dict]
 )
-def get_notifications_for_student(student_id: int):
+def get_notifications_for_student(student_id: int, current_user=Depends(require_student)):
 
     notifications = (
-        student_notification_repo
-        .get_notifications_for_student(student_id)
+        notification_controller.get_student_notifications(student_id)
     )
 
     return [
@@ -45,17 +45,12 @@ def get_notifications_for_student(student_id: int):
 
 
 @router.patch("/{student_notification_id}/read")
-def mark_as_read(student_notification_id: int):
+def mark_as_read(student_notification_id: int, current_user=Depends(require_student)):
 
-    result = student_notification_repo.mark_as_read(
-        student_notification_id
-    )
-
-    if not result:
-        raise HTTPException(
-            status_code=404,
-            detail="Student notification not found"
-        )
+    try:
+        result = notification_controller.mark_as_read(student_notification_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error))
 
     return {
         "message": "Notification marked as read"

@@ -6,20 +6,6 @@ class CourseRepo:
     def __init__(self, db):
         self.db = db
 
-        self.db.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS courses (
-                course_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                course_name TEXT NOT NULL,
-                teacher_id INTEGER NOT NULL,
-                semester TEXT NOT NULL,
-                level TEXT NOT NULL,
-                FOREIGN KEY (teacher_id)
-                    REFERENCES teachers(teacher_id)
-            )
-        """)
-
-        self.db.connection.commit()
-
 
     def add_course(self, course):
 

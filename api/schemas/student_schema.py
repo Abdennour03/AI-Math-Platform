@@ -7,6 +7,7 @@ class StudentResponse(BaseModel):
     email : str
     phone_number : str
     level :str
+    class_id: int | None = None
 
 class StudentCreate(BaseModel):
     full_name : str
@@ -14,6 +15,7 @@ class StudentCreate(BaseModel):
     password :str
     phone_number : str
     level :str
+    class_id: int | None = None
 
 class StudentUpdate(BaseModel):
     full_name: str | None = None
@@ -21,3 +23,4 @@ class StudentUpdate(BaseModel):
     password: str | None = None
     phone_number: str | None = None
     level: str | None = None    
+    class_id: int | None = None

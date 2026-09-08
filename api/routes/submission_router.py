@@ -7,6 +7,8 @@ from api.schemas.submission_schema import (
 )
 
 from api.dependencies import submission_controller
+from api.dependencies import require_student
+from fastapi import Depends
 
 
 router = APIRouter(
@@ -31,16 +33,14 @@ def submission_to_response(submission):
     "/",
     response_model=dict
 )
-def create_submission(data: SubmissionCreate):
+def create_submission(data: SubmissionCreate, current_user=Depends(require_student)):
 
     try:
 
         result = submission_controller.create_submission(
-            data.student_id,
+            current_user.student_id,
             data.exercise_id,
-            data.submission_date,
-            data.file_path,
-            data.status
+            data.file_path
         )
 
         return {

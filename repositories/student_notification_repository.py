@@ -8,23 +8,6 @@ class StudentNotificationRepo:
         self.student_repo = student_repo
         self.notification_repo = notification_repo
 
-        self.db.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS student_notifications (
-                student_notification_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                student_id INTEGER NOT NULL,
-                notification_id INTEGER NOT NULL,
-                is_read INTEGER NOT NULL DEFAULT 0,
-
-                FOREIGN KEY (student_id)
-                    REFERENCES students(student_id),
-
-                FOREIGN KEY (notification_id)
-                    REFERENCES notifications(notification_id)
-            )
-        """)
-
-        self.db.connection.commit()
-
 
     def add_student_notification(self, student_notification):
 

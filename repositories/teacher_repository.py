@@ -1,211 +1,97 @@
 from models.teacher import Teacher
-
+from models.class_group import ClassGroup
 
 class TeacherRepo:
-
     def __init__(self, db):
         self.db = db
 
-        self.db.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS teachers (
-                teacher_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                full_name TEXT NOT NULL,
-                email TEXT NOT NULL,
-                password TEXT NOT NULL,
-                phone_number TEXT
-            )
-        """)
+    def _classes_for_teacher(self, teacher_id):
+        self.db.cursor.execute(
+            """SELECT c.id, c.name, c.academic_year
+               FROM classes c
+               JOIN teacher_classes tc ON tc.class_id = c.id
+               WHERE tc.teacher_id = ?
+               ORDER BY c.name""",
+            (teacher_id,),
+        )
+        return [ClassGroup(*row) for row in self.db.cursor.fetchall()]
 
-        self.db.connection.commit()
-
+    def _teacher_from_row(self, row):
+        teacher = Teacher(row[0], row[1], row[2], row[3], row[4])
+        teacher.classes = self._classes_for_teacher(teacher.teacher_id)
+        return teacher
 
     def add_teacher(self, teacher):
-
-        self.db.cursor.execute("""
-            INSERT INTO teachers
-            (full_name, email, password, phone_number)
-            VALUES (?, ?, ?, ?)
-        """, (
-            teacher.full_name,
-            teacher.email,
-            teacher.password,
-            teacher.phone_number
-        ))
-
+        self.db.cursor.execute(
+            """INSERT INTO teachers (full_name, email, password, phone_number)
+               VALUES (?, ?, ?, ?)""",
+            (teacher.full_name, teacher.email, teacher.password, teacher.phone_number),
+        )
         self.db.connection.commit()
-
         teacher.teacher_id = self.db.cursor.lastrowid
-
+        teacher.classes = []
 
     def get_teacher(self, teacher_id):
-
-        self.db.cursor.execute("""
-            SELECT teacher_id, full_name, email,
-                   password, phone_number
-            FROM teachers
-            WHERE teacher_id = ?
-        """, (teacher_id,))
-
-        row = self.db.cursor.fetchone()
-
-        if row is None:
-            return None
-
-        return Teacher(
-            row[0],
-            row[1],
-            row[2],
-            row[3],
-            row[4]
+        self.db.cursor.execute(
+            """SELECT teacher_id, full_name, email, password, phone_number
+               FROM teachers WHERE teacher_id = ?""",
+            (teacher_id,),
         )
-
+        row = self.db.cursor.fetchone()
+        return self._teacher_from_row(row) if row else None
 
     def get_all_teachers(self):
-
-        self.db.cursor.execute("""
-            SELECT teacher_id, full_name, email,
-                   password, phone_number
-            FROM teachers
-        """)
-
-        rows = self.db.cursor.fetchall()
-
-        teachers = []
-
-        for row in rows:
-            teacher = Teacher(
-                row[0],
-                row[1],
-                row[2],
-                row[3],
-                row[4]
-            )
-
-            teachers.append(teacher)
-
-        return teachers
-
+        self.db.cursor.execute(
+            """SELECT teacher_id, full_name, email, password, phone_number
+               FROM teachers ORDER BY full_name"""
+        )
+        return [self._teacher_from_row(row) for row in self.db.cursor.fetchall()]
 
     def update_teacher(self, teacher_id, **kwargs):
-
-        if "full_name" in kwargs:
-
-            self.db.cursor.execute("""
-                UPDATE teachers
-                SET full_name = ?
-                WHERE teacher_id = ?
-            """, (kwargs["full_name"], teacher_id))
-
-
-        if "email" in kwargs:
-
-            self.db.cursor.execute("""
-                UPDATE teachers
-                SET email = ?
-                WHERE teacher_id = ?
-            """, (kwargs["email"], teacher_id))
-
-
-        if "password" in kwargs:
-
-            self.db.cursor.execute("""
-                UPDATE teachers
-                SET password = ?
-                WHERE teacher_id = ?
-            """, (kwargs["password"], teacher_id))
-
-
-        if "phone_number" in kwargs:
-
-            self.db.cursor.execute("""
-                UPDATE teachers
-                SET phone_number = ?
-                WHERE teacher_id = ?
-            """, (kwargs["phone_number"], teacher_id))
-
-
-        self.db.connection.commit()
-
+        fields = [field for field in ("full_name", "email", "password", "phone_number") if field in kwargs]
+        if fields:
+            values = [kwargs[field] for field in fields] + [teacher_id]
+            self.db.cursor.execute(
+                f"UPDATE teachers SET {', '.join(f'{field} = ?' for field in fields)} WHERE teacher_id = ?",
+                values,
+            )
+            self.db.connection.commit()
         return True
 
+    def assign_teacher_to_classes(self, teacher_id, class_ids):
+        self.db.cursor.execute(
+            "DELETE FROM teacher_classes WHERE teacher_id = ?", (teacher_id,)
+        )
+        self.db.cursor.executemany(
+            "INSERT INTO teacher_classes (teacher_id, class_id) VALUES (?, ?)",
+            [(teacher_id, class_id) for class_id in class_ids],
+        )
+        self.db.connection.commit()
 
     def delete_teacher(self, teacher_id):
-
-        teacher = self.get_teacher(teacher_id)
-
-        if teacher is None:
+        if self.get_teacher(teacher_id) is None:
             return False
-
-        self.db.cursor.execute("""
-            DELETE FROM teachers
-            WHERE teacher_id = ?
-        """, (teacher_id,))
-
+        self.db.cursor.execute("DELETE FROM teachers WHERE teacher_id = ?", (teacher_id,))
         self.db.connection.commit()
-
         return True
 
-
     def search_teacher(self, full_name):
-
-        self.db.cursor.execute("""
-            SELECT teacher_id, full_name, email,
-                   password, phone_number
-            FROM teachers
-            WHERE full_name LIKE ?
-        """, (f"%{full_name}%",))
-
-        rows = self.db.cursor.fetchall()
-
-        teachers = []
-
-        for row in rows:
-            teacher = Teacher(
-                row[0],
-                row[1],
-                row[2],
-                row[3],
-                row[4]
-            )
-
-            teachers.append(teacher)
-
-        return teachers
-
+        self.db.cursor.execute(
+            """SELECT teacher_id, full_name, email, password, phone_number
+               FROM teachers WHERE full_name LIKE ? ORDER BY full_name""",
+            (f"%{full_name}%",),
+        )
+        return [self._teacher_from_row(row) for row in self.db.cursor.fetchall()]
 
     def count_teacher(self):
-
-        self.db.cursor.execute("""
-            SELECT COUNT(*)
-            FROM teachers
-        """)
-
-        result = self.db.cursor.fetchone()
-
-        return result[0]
+        self.db.cursor.execute("SELECT COUNT(*) FROM teachers")
+        return self.db.cursor.fetchone()[0]
 
     def get_teacher_by_email(self, email):
-
-        self.db.cursor.execute("""
-            SELECT
-                teacher_id,
-                full_name,
-                email,
-                password,
-                phone_number
-            FROM teachers
-            WHERE email = ?
-        """, (email,))
-
-        row = self.db.cursor.fetchone()
-
-        if row is None:
-            return None
-
-        return Teacher(
-            row[0],
-            row[1],
-            row[2],
-            row[3],
-            row[4]
+        self.db.cursor.execute(
+            """SELECT teacher_id, full_name, email, password, phone_number
+               FROM teachers WHERE email = ?""",
+            (email,),
         )
+        row = self.db.cursor.fetchone()
+        return self._teacher_from_row(row) if row else None

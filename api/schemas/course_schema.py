@@ -12,6 +12,7 @@ class CourseResponse(BaseModel):
 
 class CourseCreate(BaseModel):
     course_name: str
+    teacher_id: int | None = None
     level: str
     semester: str
     

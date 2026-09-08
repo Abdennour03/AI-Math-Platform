@@ -4,6 +4,7 @@ from api.schemas.student_schema import (
     StudentCreate,
     StudentUpdate
 )
+from api.schemas.student_exercise_schema import StudentExerciseResponse
 from api.dependencies import student_controller
 from fastapi import APIRouter , HTTPException
 
@@ -19,13 +20,7 @@ from api.dependencies import require_student
 def get_my_profile(
     current_user=Depends(require_student)
 ):
-    return {
-        "student_id": current_user.student_id,
-        "full_name": current_user.full_name,
-        "email": current_user.email,
-        "phone_number": current_user.phone_number,
-        "level": current_user.level
-    }
+    return student_controller.get_my_profile(current_user)
 from api.dependencies import require_student
 from fastapi import Depends
 from api.dependencies import course_controller
@@ -56,12 +51,13 @@ from api.dependencies import require_student
 from fastapi import Depends
 from api.dependencies import exercise_controller
 
-@router.get("/me/exercises")
+@router.get("/me/exercises", response_model=list[StudentExerciseResponse])
 def get_my_exercises(
     current_user=Depends(require_student)
 ):
 
-    exercises = exercise_controller.get_exercises_by_level(
+    exercises = student_controller.get_my_exercises(
+        current_user.student_id,
         current_user.level
     )
 
@@ -203,29 +199,9 @@ def update_my_profile(
     current_user=Depends(require_student)
 ):
     updates = data.model_dump(exclude_none=True)
-
     if not updates:
-        raise HTTPException(
-            status_code=400,
-            detail="No data to update"
-        )
-
-    student_controller.update_student(
-        current_user.student_id,
-        **updates
-    )
-
-    updated_student = student_controller.get_student(
-        current_user.student_id
-    )
-
-    return {
-        "student_id": updated_student.student_id,
-        "full_name": updated_student.full_name,
-        "email": updated_student.email,
-        "phone_number": updated_student.phone_number,
-        "level": updated_student.level
-    }
+        raise HTTPException(status_code=400, detail="No data to update")
+    return student_controller.update_my_profile(current_user, updates)
 
 @router.get("/", response_model=list[StudentResponse])
 def get_all_student():

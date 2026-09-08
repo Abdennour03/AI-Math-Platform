@@ -6,7 +6,8 @@ from api.schemas.course_schema import (
     CourseUpdate
 )
 
-from api.dependencies import course_controller
+from api.dependencies import course_controller, require_teacher
+from fastapi import Depends
 
 
 router = APIRouter(
@@ -33,11 +34,11 @@ def get_all_courses():
 
 
 @router.post("/")
-def create_course(data: CourseCreate):
+def create_course(data: CourseCreate, current_user=Depends(require_teacher)):
 
     result = course_controller.create_course(
         data.course_name,
-        data.teacher_id,
+        current_user.teacher_id,
         data.level,
         data.semester
     )
@@ -103,21 +104,15 @@ def get_course(course_id: int):
 @router.put("/{course_id}")
 def update_course(
     course_id: int,
-    data: CourseUpdate
+    data: CourseUpdate,
+    current_user=Depends(require_teacher)
 ):
-
-    course = course_controller.get_course(course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Course not found"
-        )
 
     updates = data.model_dump(exclude_none=True)
 
     result = course_controller.update_course(
         course_id,
+        current_user.teacher_id,
         **updates
     )
 
@@ -127,17 +122,9 @@ def update_course(
 
 
 @router.delete("/{course_id}")
-def delete_course(course_id: int):
+def delete_course(course_id: int, current_user=Depends(require_teacher)):
 
-    course = course_controller.get_course(course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Course not found"
-        )
-
-    result = course_controller.delete_course(course_id)
+    result = course_controller.delete_course(course_id, current_user.teacher_id)
 
     return {
         "message": result

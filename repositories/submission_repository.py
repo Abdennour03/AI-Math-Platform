@@ -12,25 +12,6 @@ class SubmissionRepo:
         self.student_repo = student_repo
         self.exercise_repo = exercise_repo
 
-        self.db.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS submissions (
-                submission_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                student_id INTEGER NOT NULL,
-                exercise_id INTEGER NOT NULL,
-                submission_date TEXT NOT NULL,
-                file_path TEXT NOT NULL,
-                status TEXT NOT NULL,
-
-                FOREIGN KEY (student_id)
-                    REFERENCES students(student_id),
-
-                FOREIGN KEY (exercise_id)
-                    REFERENCES exercises(exercise_id)
-            )
-        """)
-
-        self.db.connection.commit()
-
 
     def add_submission(self, submission):
 
