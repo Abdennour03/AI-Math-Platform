@@ -73,6 +73,33 @@ class SubmissionRepo:
             row[5]
         )
 
+    def get_submission_by_student_and_exercise(self, student_id, exercise_id):
+        self.db.cursor.execute(
+            """SELECT submission_id, student_id, exercise_id,
+                      submission_date, file_path, status
+               FROM submissions
+               WHERE student_id = ? AND exercise_id = ?
+               ORDER BY submission_id DESC
+               LIMIT 1""",
+            (student_id, exercise_id),
+        )
+        row = self.db.cursor.fetchone()
+        if row is None:
+            return None
+
+        exercise = self.exercise_repo.get_exercise(row[2])
+        if exercise is None:
+            return None
+
+        return Submission(
+            row[0],
+            row[1],
+            exercise,
+            row[3],
+            row[4],
+            row[5],
+        )
+
 
     def get_all_submissions(self):
 

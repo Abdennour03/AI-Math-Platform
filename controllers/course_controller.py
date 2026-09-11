@@ -26,5 +26,8 @@ class CourseController:
     def get_courses_by_level(self, level):
         return self.course_service.get_courses_by_level(level)
 
+    def get_courses_by_class_id(self, class_id):
+        return self.course_service.get_courses_by_class_id(class_id)
+
     def get_courses_by_teacher(self, teacher_id):
         return self.course_service.get_courses_by_teacher(teacher_id)

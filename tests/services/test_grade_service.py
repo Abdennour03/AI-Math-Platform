@@ -9,6 +9,7 @@ from repositories.course_repository import CourseRepo
 from repositories.exercise_repository import ExerciseRepo
 from repositories.grade_repository import GradeRepo
 from repositories.student_repository import StudentRepo
+from repositories.submission_repository import SubmissionRepo
 from repositories.teacher_repository import TeacherRepo
 from services.grade_service import GradeService
 
@@ -55,3 +56,29 @@ def test_grade_score_uses_exercise_max_score(grade_context):
     exercise_repo.update_exercise(exercise.exercise_id, max_score=10)
     with pytest.raises(ValueError, match="between 0 and 10"):
         service.create_grade(11, student.student_id, exercise.exercise_id, teacher.teacher_id)
+
+
+def test_teacher_cannot_grade_before_student_submits(tmp_path):
+    db = Database(str(tmp_path / "submission-required.db"))
+    students = StudentRepo(db)
+    teachers = TeacherRepo(db)
+    courses = CourseRepo(db)
+    exercises = ExerciseRepo(db)
+    submissions = SubmissionRepo(db, students, exercises)
+    grades = GradeRepo(db, students, exercises)
+
+    teacher = Teacher(None, "Teacher", "teacher@example.com", "hash", "1")
+    student = Student(None, "Student", "student@example.com", "hash", "1", "A")
+    teachers.add_teacher(teacher)
+    students.add_student(student)
+    course = Course(None, "Course", teacher, "A", "1")
+    courses.add_course(course)
+    exercise = Exercise(None, "Exercise", course, 20)
+    exercises.add_exercise(exercise)
+
+    service = GradeService(grades, students, exercises, courses, submissions)
+
+    with pytest.raises(ValueError, match="must submit the exercise"):
+        service.create_grade(15, student.student_id, exercise.exercise_id, teacher.teacher_id)
+
+    db.close()

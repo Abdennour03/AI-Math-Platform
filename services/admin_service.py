@@ -59,6 +59,10 @@ class AdminService:
         return student
 
     def create_teacher(self, data):
+        if data.class_ids is not None:
+            for class_id in data.class_ids:
+                self.class_service.get_class(class_id)
+            self.teacher_service.validate_class_assignments(data.class_ids)
         teacher = self.teacher_service.create_teacher(
             data.full_name, data.email, data.password, data.phone_number
         )

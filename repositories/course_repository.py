@@ -303,6 +303,21 @@ class CourseRepo:
 
         return courses
 
+    def get_courses_by_class_id(self, class_id):
+        self.db.cursor.execute(
+            """SELECT courses.course_id
+               FROM courses
+               JOIN classes
+                 ON UPPER(TRIM(courses.level)) = UPPER(TRIM(classes.name))
+               WHERE classes.id = ?""",
+            (class_id,),
+        )
+        return [
+            course
+            for (course_id,) in self.db.cursor.fetchall()
+            if (course := self.get_course(course_id)) is not None
+        ]
+
     def get_courses_by_teacher(self, teacher_id):
 
         self.db.cursor.execute("""

@@ -15,16 +15,11 @@ class CourseValidator:
             raise ValueError("Description cannot be empty")
     @staticmethod
     def Validation_level(level):
-        level = level.strip().upper()
-        allowed_levels = {"3AC",
-                          "TC",
-                          "1BAC",
-                          "2BAC"}
-        if level not in allowed_levels:
-            raise ValueError("Invalid level.")
+        if not isinstance(level, str) or not level.strip():
+            raise ValueError("Class name is required.")
     @staticmethod
     def Validation_semester(semester):
         semester = semester.strip().upper()
         allowed_semesters = {"S1","S2",}
         if semester not in allowed_semesters:
-            raise ValueError("Invalid level.") 
+            raise ValueError("Invalid semester.")

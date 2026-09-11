@@ -35,12 +35,20 @@ class TeacherService:
 
     def assign_to_classes(self, teacher_id, class_ids):
         self.get_teacher(teacher_id)
+        self.validate_class_assignments(class_ids, teacher_id)
+        self.teacher_repo.assign_teacher_to_classes(teacher_id, class_ids)
+
+    def validate_class_assignments(self, class_ids, teacher_id=None):
         if len(class_ids) != len(set(class_ids)):
             raise ValueError("Class IDs must be unique.")
         for class_id in class_ids:
             if not isinstance(class_id, int):
                 raise ValueError("Class IDs must be integers.")
-        self.teacher_repo.assign_teacher_to_classes(teacher_id, class_ids)
+            assigned_teacher_id = self.teacher_repo.get_teacher_id_for_class(class_id)
+            if assigned_teacher_id is not None and assigned_teacher_id != teacher_id:
+                raise ValueError(
+                    f"Class ID {class_id} is already assigned to another teacher."
+                )
         
     def update_teacher(self, teacher_id, **kwargs):
         teacher = self.teacher_repo.get_teacher(teacher_id)

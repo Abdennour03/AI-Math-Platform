@@ -39,7 +39,7 @@ class AdminProfileUpdate(BaseModel):
 
 
 class AdminSetupRequest(BaseModel):
-    full_name: str
+    name: str
     email: str
     password: str
 
@@ -82,7 +82,6 @@ class ClassInfo(BaseModel):
 class ExerciseGradeReport(BaseModel):
     exercise_id: int
     exercise_name: str
-    max_score: float
     score: float | None
 
 

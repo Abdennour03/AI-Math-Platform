@@ -58,9 +58,71 @@ The SQLite `UNIQUE(student_id, exercise_id)` constraint is a persistence backsto
 
 Authentication follows `Auth route -> AuthController -> AuthService -> student/teacher repositories -> SQLite`. JWT helpers remain in `utils/security.py`. Current-user dependencies resolve users through services, preserving student and teacher role checks.
 
+Admin authentication follows the same flow with `AdminRepo` as an additional
+credential source. Successful admin logins receive a JWT with
+`role: "admin"`. The `get_current_admin` dependency resolves and authorizes
+admin users; every protected `/admin/*` route depends on it.
+
+Classes are represented by the `ClassGroup` domain model and persisted in the
+`classes` table. Students keep one optional `class_id`. Teachers use the
+`teacher_classes` junction table, so one teacher may teach multiple classes
+and one class may have multiple teachers. Existing scalar teacher assignments
+are migrated into the junction table.
+
+Admin business operations include:
+
+- creating and updating the authenticated admin profile;
+- creating an admin through the public `POST /admin/setup` bootstrap route;
+- creating, searching, updating, and deleting students and teachers;
+- creating, updating, listing, and deleting classes;
+- assigning students to one class;
+- replacing a teacher's assigned class set through
+  `POST /admin/teachers/{teacher_id}/classes`;
+- returning a complete student academic report with class information,
+  exercises, and nullable scores.
+
+Attendance operations include:
+
+- allowing a teacher to retrieve the students in one of their assigned classes;
+- saving one attendance status per student, class, and date;
+- updating an existing attendance record for the same student and date;
+- allowing teachers to view attendance history for their assigned classes;
+- allowing administrators to retrieve a monthly attendance report by class.
+
+Attendance statuses are restricted to `present` and `absent`. The attendance
+service verifies that the selected class belongs to the teacher and that every
+submitted student belongs to that class before any record is written.
+
 ## Persistence Reality
 
-This project uses raw `sqlite3`; it does not use SQLAlchemy or another ORM. The existing `eduinsight.db` file is retained. Schema creation is centralized in `Database.create_tables()` and is idempotent. No ORM migration was attempted because it would be a separate compatibility and migration project.
+This project uses raw `sqlite3`; it does not use SQLAlchemy or another ORM.
+Schema creation is centralized in `Database.create_tables()` and is
+idempotent. It creates the Admin, Class, and teacher-class relationship tables,
+adds non-destructive compatibility columns where required, migrates legacy
+teacher class assignments, and seeds the initial admin account when it is not
+present:
+
+```text
+email:    admin@eduinsight.ai
+password: adminpassword
+```
+
+Attendance is stored in the `attendance` table:
+
+```text
+attendance_id | student_id | class_id | date       | status
+-----------------------------------------------------------
+1             | 1          | 1         | 2026-09-11 | present
+2             | 2          | 1         | 2026-09-11 | absent
+```
+
+The table has a unique constraint on `(student_id, class_id, date)`. Saving
+attendance uses SQLite upsert behavior, so correcting a student's status for
+the same day updates the existing row instead of creating a duplicate.
+
+The SQLite database file may be deleted for a clean local reset; restarting
+the application recreates the schema and seed admin. No ORM migration was
+introduced.
 
 ## Structure
 
@@ -71,10 +133,22 @@ api/
   dependencies.py
   routes/
   schemas/
+  routes/admin_router.py
+  schemas/admin_schemas.py
 controllers/
+  admin_controller.py
+  attendance_controller.py
+  class_controller.py
 services/
+  admin_service.py
+  attendance_service.py
+  class_service.py
 repositories/
+  admin_repository.py
+  attendance_repository.py
+  class_repository.py
 models/
+  attendance.py
 database/database.py
 utils/
 tests/
@@ -92,15 +166,25 @@ Before the refactor, `api/dependencies.py` passed repositories directly to sever
 After the refactor:
 
 - dependency construction is Database -> Repository -> Service -> Controller;
+- Admin and Class entities were added through the same dependency direction;
+- admin authentication and protected administrative routes were added;
+- public admin bootstrap was added at `POST /admin/setup`;
+- teacher-to-class changed from a scalar foreign key to the `teacher_classes`
+  many-to-many junction table;
 - notification and authentication workflows moved from controllers into services;
 - grade teacher ownership moved from routes into `GradeService`;
+- attendance management was added through `AttendanceRepo`,
+  `AttendanceService`, `AttendanceController`, and attendance routes;
+- attendance records use a unique student/class/date key and upsert on correction;
 - student-notification routes use `NotificationController` and `NotificationService`;
 - schema creation moved into `database/database.py`;
 - `CourseController` was implemented as a service facade;
 - stale CLI/view and monolithic copies were removed;
 - tests moved from the non-executable `test/` scripts to `tests/controllers`, `tests/services`, and `tests/repositories`.
 
-No files were renamed. Removed files were obsolete `all_code.py`, `reste.py`, the old CLI view modules, and the old import-time test scripts. The SQLite database file was not removed or recreated.
+Removed files were obsolete `all_code.py`, `reste.py`, the old CLI view
+modules, and the old import-time test scripts. The SQLite database is treated
+as local runtime state and is recreated by the database gateway when absent.
 
 ## Verification
 
@@ -109,6 +193,13 @@ The following checks were performed:
 - compiled all API, controller, service, repository, model, utility, and database modules;
 - imported the complete FastAPI application successfully;
 - exercised grade creation, duplicate rejection, ownership rejection, and authorized update against a temporary SQLite database;
+- exercised admin setup, admin JWT role resolution, class creation, and
+  teacher assignment to multiple classes against temporary SQLite databases;
+- exercised attendance saving, same-day correction, teacher class ownership,
+  student membership validation, and monthly history against temporary SQLite
+  databases;
+- verified legacy class/admin migration and the OpenAPI Admin and teacher
+  response contracts;
 - added pytest coverage for the database schema, controller delegation, and grade business rules.
 
 Run the full suite with:
@@ -242,6 +333,36 @@ Teacher
   -> SQLite grades table
 ```
 
+The teacher attendance workflow follows this sequence:
+
+```text
+Teacher
+  -> GET /teachers/me/attendance/classes/{class_id}/students
+  -> AttendanceController.get_class_students
+  -> AttendanceService.get_class_students
+       - verify the class exists
+       - verify the teacher is assigned to the class
+       - load students assigned to the class
+
+Teacher
+  -> POST /teachers/me/attendance
+  -> AttendanceController.save_attendance
+  -> AttendanceService.save_attendance
+       - validate statuses and duplicate student entries
+       - verify every student belongs to the selected class
+       - upsert attendance by student, class, and date
+  -> AttendanceRepo.save_attendance
+  -> SQLite attendance table
+```
+
+Administrators can retrieve the same stored records with:
+
+```text
+GET /admin/attendance/report?class_id=1&month=2026-09
+```
+
+The `month` query parameter uses `YYYY-MM` format.
+
 The route does not query the database and does not decide whether the teacher
 owns the exercise.
 
@@ -268,6 +389,10 @@ tests/controllers   -> delegation contracts
 Service tests use temporary SQLite databases. The most important grade cases
 are covered: successful creation, duplicate rejection, cross-teacher rejection,
 and authorized update.
+
+Attendance service tests cover successful saving, same-day status correction,
+rejection of students from another class, and filtering teacher history by
+month.
 
 Future API tests should use FastAPI's test client to verify authentication,
 status codes, response schemas, and route serialization without asserting SQL

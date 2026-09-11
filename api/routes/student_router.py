@@ -29,9 +29,10 @@ from api.dependencies import course_controller
 def get_my_courses(
     current_user=Depends(require_student)
 ):
-    courses = course_controller.get_courses_by_level(
-        current_user.level
-    )
+    if current_user.class_id is None:
+        return []
+
+    courses = course_controller.get_courses_by_class_id(current_user.class_id)
 
     return [
         {
@@ -55,10 +56,12 @@ from api.dependencies import exercise_controller
 def get_my_exercises(
     current_user=Depends(require_student)
 ):
+    if current_user.class_id is None:
+        return []
 
     exercises = student_controller.get_my_exercises(
         current_user.student_id,
-        current_user.level
+        current_user.class_id
     )
 
     return [

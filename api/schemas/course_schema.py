@@ -15,6 +15,12 @@ class CourseCreate(BaseModel):
     teacher_id: int | None = None
     level: str
     semester: str
+
+
+class TeacherCourseCreate(BaseModel):
+    course_name: str
+    class_id: int
+    semester: str
     
 
 

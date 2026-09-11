@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from api.routes.student_router import router as student_router
 from api.routes.teacher_router import router as teacher_router
 from api.routes.course_router import router as course_router
@@ -11,10 +12,24 @@ from api.routes.submission_router import router as submission_router
 from api.routes.grade_router import router as grade_router
 from api.routes.auth_router import router as auth_router
 from api.routes.admin_router import router as admin_router
+from api.routes.attendance_router import router as attendance_router
 app = FastAPI(
     title = "EduAnalytics API",
     description="Backend API for EduAnalytics",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(student_router)
@@ -27,6 +42,7 @@ app.include_router(submission_router)
 app.include_router(grade_router)
 app.include_router(auth_router)
 app.include_router(admin_router)
+app.include_router(attendance_router)
 
 @app.get("/")
 def root():

@@ -103,5 +103,31 @@ class ExerciseRepo:
             exercises.append(exercise)
         return exercises
 
+    def get_exercises_by_class_id_for_student(self, class_id, student_id):
+        query = """
+            SELECT exercises.exercise_id, exercises.exercise_name,
+                   courses.course_id, courses.course_name, exercises.max_score,
+                   courses.semester, courses.level,
+                   teachers.teacher_id, teachers.full_name, teachers.email,
+                   teachers.password, teachers.phone_number,
+                   grades.score
+            FROM exercises
+            JOIN courses ON exercises.course_id = courses.course_id
+            JOIN classes
+                ON UPPER(TRIM(courses.level)) = UPPER(TRIM(classes.name))
+            JOIN teachers ON courses.teacher_id = teachers.teacher_id
+            LEFT JOIN grades
+                ON grades.exercise_id = exercises.exercise_id
+               AND grades.student_id = ?
+            WHERE classes.id = ?
+        """
+        self.db.cursor.execute(query, (student_id, class_id))
+        exercises = []
+        for row in self.db.cursor.fetchall():
+            exercise = self._from_row(row[:12])
+            exercise.score = row[12]
+            exercises.append(exercise)
+        return exercises
+
     def get_exercises_by_teacher(self, teacher_id):
         return self._select(" WHERE courses.teacher_id = ?", (teacher_id,))

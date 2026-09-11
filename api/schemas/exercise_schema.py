@@ -14,6 +14,12 @@ class ExerciseCreate(BaseModel):
     max_score: float = 20
 
 
+class TeacherExerciseCreate(BaseModel):
+    exercise_name: str
+    course_id: int
+    max_score: float = 20
+
+
 class ExerciseUpdate(BaseModel):
     exercise_name: str | None = None
     course_id: int | None = None

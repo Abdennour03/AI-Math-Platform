@@ -47,6 +47,14 @@ class TeacherRepo:
         )
         return [self._teacher_from_row(row) for row in self.db.cursor.fetchall()]
 
+    def get_teacher_id_for_class(self, class_id):
+        self.db.cursor.execute(
+            "SELECT teacher_id FROM teacher_classes WHERE class_id = ?",
+            (class_id,),
+        )
+        row = self.db.cursor.fetchone()
+        return row[0] if row else None
+
     def update_teacher(self, teacher_id, **kwargs):
         fields = [field for field in ("full_name", "email", "password", "phone_number") if field in kwargs]
         if fields:

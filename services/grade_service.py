@@ -8,12 +8,14 @@ class GradeService:
         grade_repo,
         student_repo,
         exercise_repo,
-        course_repo
+        course_repo,
+        submission_repo=None,
     ):
         self.grade_repo = grade_repo
         self.student_repo = student_repo
         self.exercise_repo = exercise_repo
         self.course_repo = course_repo
+        self.submission_repo = submission_repo
 
     # =====================================================
     # CREATE GRADE
@@ -36,6 +38,16 @@ class GradeService:
 
         if exercise is None:
             raise ValueError("Exercise not found.")
+
+        if self.submission_repo is not None:
+            submission = self.submission_repo.get_submission_by_student_and_exercise(
+                student_id,
+                exercise_id,
+            )
+            if submission is None:
+                raise ValueError(
+                    "The student must submit the exercise before it can be graded."
+                )
 
         validate_score(score, exercise.max_score)
 

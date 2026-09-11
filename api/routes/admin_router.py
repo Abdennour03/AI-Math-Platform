@@ -65,7 +65,7 @@ def class_response(class_group):
 def setup_admin(data: AdminSetupRequest):
     try:
         admin = admin_controller.setup_admin(
-            data.full_name,
+            data.name,
             data.email,
             data.password,
         )

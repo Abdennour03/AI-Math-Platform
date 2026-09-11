@@ -75,6 +75,11 @@ class CourseService:
     def get_courses_by_level(self, level):
         courses = self.course_repo.get_courses_by_level(level)
         return courses
+
+    def get_courses_by_class_id(self, class_id):
+        if not isinstance(class_id, int):
+            raise ValueError("Class ID must be an int")
+        return self.course_repo.get_courses_by_class_id(class_id)
         
     def get_courses_by_teacher(self, teacher_id):
 

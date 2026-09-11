@@ -1,12 +1,93 @@
 import sqlite3
+import threading
+
+
+class _LockedCursor:
+    def __init__(self, cursor, lock):
+        self._cursor = cursor
+        self._lock = lock
+
+    def execute(self, *args, **kwargs):
+        with self._lock:
+            self._cursor.execute(*args, **kwargs)
+        return self
+
+    def executemany(self, *args, **kwargs):
+        with self._lock:
+            self._cursor.executemany(*args, **kwargs)
+        return self
+
+    def executescript(self, *args, **kwargs):
+        with self._lock:
+            self._cursor.executescript(*args, **kwargs)
+        return self
+
+    def fetchone(self):
+        with self._lock:
+            return self._cursor.fetchone()
+
+    def fetchall(self):
+        with self._lock:
+            return self._cursor.fetchall()
+
+    def fetchmany(self, *args, **kwargs):
+        with self._lock:
+            return self._cursor.fetchmany(*args, **kwargs)
+
+    def __iter__(self):
+        return iter(self.fetchall())
+
+    def __getattr__(self, name):
+        return getattr(self._cursor, name)
+
+
+class _LockedConnection:
+    def __init__(self, connection, lock):
+        self._connection = connection
+        self._lock = lock
+
+    def cursor(self):
+        return _LockedCursor(self._connection.cursor(), self._lock)
+
+    def execute(self, *args, **kwargs):
+        with self._lock:
+            cursor = self._connection.execute(*args, **kwargs)
+        return _LockedCursor(cursor, self._lock)
+
+    def commit(self):
+        with self._lock:
+            self._connection.commit()
+
+    def rollback(self):
+        with self._lock:
+            self._connection.rollback()
+
+    def close(self):
+        with self._lock:
+            self._connection.close()
+
+    def __getattr__(self, name):
+        return getattr(self._connection, name)
 
 
 class Database:
     def __init__(self, db_name="eduinsight.db"):
-        self.connection = sqlite3.connect(db_name, check_same_thread=False)
+        self._lock = threading.RLock()
+        self.connection = _LockedConnection(
+            sqlite3.connect(db_name, check_same_thread=False),
+            self._lock,
+        )
         self.connection.execute("PRAGMA foreign_keys = ON")
-        self.cursor = self.connection.cursor()
+        self._cursor_storage = threading.local()
         self.create_tables()
+
+    @property
+    def cursor(self):
+        cursor = getattr(self._cursor_storage, "cursor", None)
+        if cursor is None:
+            cursor = self.connection.cursor()
+            self._cursor_storage.cursor = cursor
+        return cursor
 
     def create_tables(self):
         existing_classes = self.cursor.execute(
@@ -98,6 +179,16 @@ class Database:
                 FOREIGN KEY (student_id) REFERENCES students(student_id),
                 FOREIGN KEY (exercise_id) REFERENCES exercises(exercise_id),
                 UNIQUE (student_id, exercise_id)
+            );
+            CREATE TABLE IF NOT EXISTS attendance (
+                attendance_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id INTEGER NOT NULL,
+                class_id INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                status TEXT NOT NULL CHECK (status IN ('present', 'absent')),
+                FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE,
+                FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+                UNIQUE (student_id, class_id, date)
             );
             CREATE TABLE IF NOT EXISTS notifications (
                 notification_id INTEGER PRIMARY KEY AUTOINCREMENT,

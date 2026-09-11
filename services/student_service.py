@@ -38,13 +38,22 @@ class StudentService:
             raise ValueError("Level must be a string.")
         return self.student_repo.get_students_by_level(level)
 
-    def get_my_exercises(self, student_id, level):
+    def get_students_by_class_ids(self, class_ids):
+        if not all(isinstance(class_id, int) for class_id in class_ids):
+            raise ValueError("Class IDs must be integers.")
+        return self.student_repo.get_students_by_class_ids(class_ids)
+
+    def get_my_exercises(self, student_id, class_id):
         if not isinstance(student_id, int):
             raise ValueError("Student ID must be an integer.")
-        if not isinstance(level, str):
-            raise ValueError("Level must be a string.")
-        return self.exercise_repo.get_exercises_by_level_for_student(
-            level, student_id
+        if isinstance(class_id, str):
+            return self.exercise_repo.get_exercises_by_level_for_student(
+                class_id, student_id
+            )
+        if not isinstance(class_id, int):
+            raise ValueError("Class ID must be an integer.")
+        return self.exercise_repo.get_exercises_by_class_id_for_student(
+            class_id, student_id
         )
 
     def assign_to_class(self, student_id, class_id):
@@ -105,6 +114,7 @@ class StudentService:
             "email": current_user.email,
             "phone_number": current_user.phone_number,
             "level": current_user.level,
+            "class_id": current_user.class_id,
         }
 
     def update_my_profile(self, current_user, updates):
@@ -120,4 +130,5 @@ class StudentService:
             "email": updated.email,
             "phone_number": updated.phone_number,
             "level": updated.level,
+            "class_id": updated.class_id,
         }

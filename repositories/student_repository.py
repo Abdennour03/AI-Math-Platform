@@ -94,6 +94,32 @@ class StudentRepo:
             )
 
         return students
+
+    def get_students_by_class_ids(self, class_ids):
+        if not class_ids:
+            return []
+
+        placeholders = ", ".join("?" for _ in class_ids)
+        self.db.cursor.execute(
+            f"""SELECT student_id, full_name, email,
+                      password, phone_number, level, class_id
+               FROM students
+               WHERE class_id IN ({placeholders})""",
+            class_ids,
+        )
+
+        return [
+            Student(
+                row[0],
+                row[1],
+                row[2],
+                row[3],
+                row[4],
+                row[5],
+                row[6],
+            )
+            for row in self.db.cursor.fetchall()
+        ]
         
     def update_student(self, student_id, **kwargs):
         student = self.get_student(student_id)
@@ -253,13 +279,16 @@ WHERE student_id = ?""", (student_id,))
         self.db.cursor.execute("""
             SELECT s.student_id, s.full_name, s.email, s.phone_number, s.level,
                    s.class_id, c.name, c.academic_year,
-                   e.exercise_id, e.exercise_name, e.max_score, g.score
+                     e.exercise_id, e.exercise_name, g.score
             FROM students s
-            LEFT JOIN classes c ON c.class_id = s.class_id
+                 LEFT JOIN classes c ON c.id = s.class_id
             LEFT JOIN exercises e ON EXISTS (
                 SELECT 1 FROM courses course_for_exercise
                 WHERE course_for_exercise.course_id = e.course_id
-                  AND UPPER(TRIM(course_for_exercise.level)) = UPPER(TRIM(s.level))
+                  AND (
+                      UPPER(TRIM(course_for_exercise.level)) = UPPER(TRIM(c.name))
+                      OR UPPER(TRIM(course_for_exercise.level)) = UPPER(TRIM(s.level))
+                  )
             )
             LEFT JOIN grades g
               ON g.student_id = s.student_id AND g.exercise_id = e.exercise_id
@@ -282,8 +311,7 @@ WHERE student_id = ?""", (student_id,))
                 {
                     "exercise_id": row[8],
                     "exercise_name": row[9],
-                    "max_score": row[10],
-                    "score": row[11],
+                    "score": row[10],
                 }
                 for row in rows if row[8] is not None
             ],

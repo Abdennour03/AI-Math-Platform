@@ -43,6 +43,11 @@ def get_my_profile(
     return teacher_response(current_user)
 
 
+@router.get("/me/classes")
+def get_my_classes(current_user=Depends(require_teacher)):
+    return teacher_response(current_user)["classes"]
+
+
 @router.put("/me")
 def update_my_profile(
     data: TeacherUpdate,
@@ -117,18 +122,29 @@ def get_my_exercises(
         for exercise in exercises
     ]
 
-from api.schemas.course_schema import CourseCreate
+from api.schemas.course_schema import TeacherCourseCreate
 
 @router.post("/me/courses")
 def create_my_course(
-    data: CourseCreate,
+    data: TeacherCourseCreate,
     current_user=Depends(require_teacher)
 ):
     try:
+        class_group = next(
+            (
+                class_group
+                for class_group in current_user.classes
+                if class_group.class_id == data.class_id
+            ),
+            None,
+        )
+        if class_group is None:
+            raise ValueError("You can only create courses for your assigned classes.")
+
         result = course_controller.create_course(
             data.course_name,
             current_user.teacher_id,
-            data.level,
+            class_group.name,
             data.semester
         )
 
@@ -143,11 +159,11 @@ def create_my_course(
         )
 
 
-from api.schemas.exercise_schema import ExerciseCreate
+from api.schemas.exercise_schema import TeacherExerciseCreate
 
 @router.post("/me/exercises")
 def create_my_exercise(
-    data: ExerciseCreate,
+    data: TeacherExerciseCreate,
     current_user=Depends(require_teacher)
 ):
 
@@ -157,7 +173,7 @@ def create_my_exercise(
             data.exercise_name,
             data.course_id,
             current_user.teacher_id,
-            data.max_score
+            data.max_score,
         )
 
         return {
@@ -173,17 +189,8 @@ def create_my_exercise(
 def get_my_students(
     current_user=Depends(require_teacher)
 ):
-    courses = course_controller.get_courses_by_teacher(current_user.teacher_id)
-
-    levels = {course.level for course in courses}
-
-    students = []
-    for level in levels:
-        students.extend(student_controller.get_students_by_level(level))
-
-    unique_students = {}
-    for student in students:
-        unique_students[student.student_id] = student
+    class_ids = [class_group.class_id for class_group in current_user.classes]
+    students = student_controller.get_students_by_class_ids(class_ids)
 
     return [
         {
@@ -193,7 +200,7 @@ def get_my_students(
             "phone_number": student.phone_number,
             "level": student.level
         }
-        for student in unique_students.values()
+        for student in students
     ]
 
 from api.schemas.grade_schema import GradeCreate
